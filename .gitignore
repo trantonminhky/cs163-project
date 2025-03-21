@@ -1,0 +1,12 @@
+*.exe
+*.dsym
+main
+/lib
+/.vs
+/.vscode
+/include
+CppProperties.json
+main.code-workspace
+Makefile
+preview.jpg
+README.md
