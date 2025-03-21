@@ -194,6 +194,7 @@ int main() {
         drawButton(randomButton, "Random", ORANGE, randomHover, randomClicked);
         drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
+        // afdyagudgasd
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
         DrawRectangleLinesEx(inputBox, 2, BLACK);
