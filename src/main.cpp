@@ -17,7 +17,7 @@ int main() {
     
     while (!WindowShouldClose()) {
         ui.update();
-        
+        // ajsbdjsadnds 
         BeginDrawing();
             ClearBackground(backgroundColor);
             ui.draw();
