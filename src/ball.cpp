@@ -29,5 +29,5 @@ void Ball::Update()
 
 void Ball::Draw() const
 {
-    DrawCircle(x, y, radius, WHITE);
+    DrawCircle(x, y, radius, BLACK);
 }

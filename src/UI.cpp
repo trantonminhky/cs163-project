@@ -27,33 +27,119 @@ void UI::update() {
             key = GetCharPressed();
         }
     }
-    
+
+if (animState != AnimationState::NONE) {
+    if (animTimer > 0) {
+        animTimer--;
+    } else {
+        switch (animState) {
+            case AnimationState::INDEX:
+                animState = AnimationState::EXISTING_NODES;
+                animTimer = 15;
+                break;
+            case AnimationState::EXISTING_NODES:
+                if (animStep < (int)existingValues.size()) {
+                    animStep++;
+                    animTimer = 15;
+                } else {
+                    // Handle completion based on operation
+                    if (pendingInsertValue != -1) {  // Insert
+                        hashTable->insert(pendingInsertValue);
+                        pendingInsertValue = -1;
+                    } else if (pendingRemoveValue != -1) {  // Remove (new variable, see below)
+                        hashTable->remove(pendingRemoveValue);
+                        pendingRemoveValue = -1;
+                    }  // Find doesn’t need a final action
+                    animState = AnimationState::NONE;
+                    animIndex = -1;
+                    existingValues.clear();
+                    animStep = 0;
+                }
+                break;
+            case AnimationState::NEW_NODE:  // Used for insert only
+                if (pendingInsertValue != -1) {
+                    hashTable->insert(pendingInsertValue);
+                    pendingInsertValue = -1;
+                }
+                animState = AnimationState::NONE;
+                animIndex = -1;
+                existingValues.clear();
+                animStep = 0;
+                break;
+            default:
+                break;
+        }
+    }
+}
+
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         int value = strlen(inputText) > 0 ? atoi(inputText) : -1;
         if (CheckCollisionPointRec(mousePoint, insertBtn) && value >= 0) {
-            if (hashTable->find(value)) {
-        resultMessage = "Duplicate: " + std::string(inputText) + " already exists";
+        if (hashTable->find(value)) {
+            resultMessage = "Duplicate: " + std::string(inputText) + " already exists";
+            highlightedValue = value;
+            highlightTimer = 60;
         } else {
-            hashTable->insert(value);
-            resultMessage = "Inserted: " + std::string(inputText);
+        // Don’t insert yet, store the value and start animation
+        pendingInsertValue = value;
+        resultMessage = "Inserting: " + std::string(inputText);
+        animState = AnimationState::INDEX;
+        animIndex = hashTable->hashFunction(value);
+        existingValues.clear();
+        Node* current = hashTable->getTable()[animIndex];
+        while (current) {
+            existingValues.push_back(current->value);
+            current = current->next;
         }
-            resultMessageTimer = 120;
-            inputText[0] = '\0';
-            inputActive = false;  // Turn off input after action
+        animStep = 0;
+        animTimer = 15;
+        }
+        resultMessageTimer = 120;
+        inputText[0] = '\0';
+        inputActive = false;
         }
         else if (CheckCollisionPointRec(mousePoint, removeBtn) && value >= 0) {
-            bool success = hashTable->remove(value);
-            resultMessage = success ? "Removed: " + std::string(inputText) : "Not found: " + std::string(inputText);
-            resultMessageTimer = 120;
-            inputText[0] = '\0';
-            inputActive = false;  // Turn off input after action
+        if (hashTable->find(value)) {
+        pendingRemoveValue = value;  // Store value to remove later
+        resultMessage = "Removing: " + std::string(inputText);
+        animState = AnimationState::INDEX;
+        animIndex = hashTable->hashFunction(value);
+        existingValues.clear();
+        Node* current = hashTable->getTable()[animIndex];
+        while (current && current->value != value) {  // Stop at the value to remove
+            existingValues.push_back(current->value);
+            current = current->next;
         }
-        else if (CheckCollisionPointRec(mousePoint, findBtn) && value >= 0) {
-            bool found = hashTable->find(value);
-            resultMessage = found ? "Found: " + std::string(inputText) : "Not found: " + std::string(inputText);
+        if (current) existingValues.push_back(current->value);  // Include the node to remove
+        animStep = 0;
+        animTimer = 15;
+        } else {
+        resultMessage = "Not found: " + std::string(inputText);
+        }
             resultMessageTimer = 120;
             inputText[0] = '\0';
-            inputActive = false;  // Turn off input after action
+            inputActive = false;
+        }
+else if (CheckCollisionPointRec(mousePoint, findBtn) && value >= 0) {
+    if (hashTable->find(value)) {
+        resultMessage = "Finding: " + std::string(inputText);
+        animState = AnimationState::INDEX;
+        animIndex = hashTable->hashFunction(value);
+        existingValues.clear();
+        Node* current = hashTable->getTable()[animIndex];
+        while (current && current->value != value) {  // Stop at the value to find
+            existingValues.push_back(current->value);
+            current = current->next;
+        }
+        if (current) existingValues.push_back(current->value);  // Include the found node
+        animStep = 0;
+        animTimer = 15;
+        } else {
+            resultMessage = "Not found: " + std::string(inputText);
+        }
+        resultMessageTimer = 120;
+        inputText[0] = '\0';
+        inputActive = false;
         }
         else if (CheckCollisionPointRec(mousePoint, clearBtn)) {
             hashTable->clear();
@@ -111,19 +197,42 @@ void UI::drawTable() const {
     
     for (int i = 0; i < 17; i++) {
         // Draw index as a rectangle
-        DrawRectangleRec(indexRects[i], LIGHTGRAY);
-        DrawText(TextFormat("%d", i), indexRects[i].x + 10, indexRects[i].y + 5, 20, BLACK);  // Centered in rectangle
+        DrawRectangleRec(indexRects[i], BLACK);
+        if (animState == AnimationState::INDEX && i == animIndex) {
+            DrawRectangleLinesEx(indexRects[i], 3, YELLOW);
+        }
+        DrawText(TextFormat("%d", i), indexRects[i].x + 10, indexRects[i].y + 5, 20, WHITE);  // Centered in rectangle
         
         Node* current = hashTable->getTable()[i];
         int xOffset = 70;  // Increased from 40 to account for wider index rectangle
+        int nodeIndex = 0;
         while (current) {
-            DrawRectangle(xOffset, 110 + i * slotHeight, slotWidth, 30, LIGHTGRAY);  // Adjusted y-position to 150
+            Rectangle valueRect = {float(xOffset), float(110 + i * slotHeight), slotWidth, 30};
+            DrawRectangleRec(valueRect, LIGHTGRAY);
+            // Glow existing nodes in sequence
+            if (animState == AnimationState::EXISTING_NODES && i == animIndex && 
+                nodeIndex < animStep && nodeIndex < (int)existingValues.size() && 
+                current->value == existingValues[nodeIndex]) {
+                DrawRectangleLinesEx(valueRect, 3, YELLOW);
+            }
+            // Glow new node
+            if (animState == AnimationState::NEW_NODE && i == animIndex && !current->next && pendingInsertValue!=-1) {
+                DrawRectangleLinesEx(valueRect, 3, YELLOW);
+            }
+            //DrawRectangle(xOffset, 110 + i * slotHeight, slotWidth, 30, LIGHTGRAY);  // Adjusted y-position to 150
             DrawText(TextFormat("%d", current->value), xOffset + 5, 115 + i * slotHeight, 20, BLACK);
             //if (current->next) {
                 DrawLine(xOffset - 20, 125 + i * slotHeight, xOffset, 125 + i * slotHeight, BLACK);
             //}
             xOffset += 70;
             current = current->next;
+            nodeIndex++;
+        }
+            if (animState == AnimationState::NEW_NODE && i == animIndex && pendingInsertValue != -1) {
+            Rectangle newRect = {float(xOffset), float(110 + i * slotHeight), slotWidth, 30};
+            DrawRectangleRec(newRect, LIGHTGRAY);
+            DrawRectangleLinesEx(newRect, 3, YELLOW);
+            DrawText(TextFormat("%d", pendingInsertValue), xOffset + 5, 115 + i * slotHeight, 20, BLACK);
         }
     }
 }

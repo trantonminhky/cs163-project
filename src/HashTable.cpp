@@ -18,6 +18,7 @@ void HashTable::insert(int value) {
     if (find(value)) {
         return;
     }
+    
     int index = hashFunction(value);
     Node* newNode = new Node{value, nullptr};
     

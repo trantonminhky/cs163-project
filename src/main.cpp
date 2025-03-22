@@ -11,13 +11,11 @@ int main() {
     
     HashTable hashTable;
     UI ui(&hashTable);
-    
     InitWindow(screenWidth, screenHeight, "Hash Table Visualization");
     SetTargetFPS(60);
     
     while (!WindowShouldClose()) {
         ui.update();
-        // ajsbdjsadnds 
         BeginDrawing();
             ClearBackground(backgroundColor);
             ui.draw();
