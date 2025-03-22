@@ -264,10 +264,15 @@ void AVLTree::calculatePositions(Node* node, int x, int y, int xOffset, int dept
     node->targetX = static_cast<float>(x);
     node->targetY = static_cast<float>(y);
 
+    // Increase vertical spacing and adjust xOffset dynamically
+    int verticalSpacing = 100; // Increased from 80
+    int adjustedXOffset = xOffset / (depth > 1 ? depth : 1); // Prevent division by zero
+    adjustedXOffset = std::max(100, adjustedXOffset); // Minimum spacing of 100
+
     if (node->left)
-        calculatePositions(node->left, x - std::max(50, xOffset / (depth + 1)), y + 80, xOffset, depth + 1);
+        calculatePositions(node->left, x - adjustedXOffset, y + verticalSpacing, xOffset, depth + 1);
     if (node->right)
-        calculatePositions(node->right, x + std::max(50, xOffset / (depth + 1)), y + 80, xOffset, depth + 1);
+        calculatePositions(node->right, x + adjustedXOffset, y + verticalSpacing, xOffset, depth + 1);
 }
 
 void AVLTree::updateAnimation(float deltaTime) {
@@ -287,19 +292,19 @@ void AVLTree::updateAnimation(float deltaTime) {
     for (Node* node : nodes) {
         float dx = node->targetX - node->x;
         float dy = node->targetY - node->y;
-        node->x += dx * deltaTime * 5.0f;
-        node->y += dy * deltaTime * 5.0f;
+        node->x += dx * deltaTime * 2.0f; // Changed from 5.0f to 2.0f
+        node->y += dy * deltaTime * 2.0f; // Changed from 5.0f to 2.0f
     }
 }
 
 void AVLTree::drawNode(Node* node, const std::vector<Node*>& highlightPath) {
     if (!node) return;
 
-    Color color = BLUE;
+    Color color = { 100, 200, 150, 255 }; // Soft teal for default nodes
     bool isHighlighted = false;
     for (const Node* pathNode : highlightPath) {
         if (node == pathNode) {
-            color = YELLOW;
+            color = { 255, 165, 0, 255 }; // Bright orange for highlighted nodes
             isHighlighted = true;
             break;
         }
@@ -309,7 +314,8 @@ void AVLTree::drawNode(Node* node, const std::vector<Node*>& highlightPath) {
     float radius = isHighlighted ? 20 * pulse : 20;
 
     DrawCircle(static_cast<int>(node->x), static_cast<int>(node->y), radius, color);
-    DrawText(std::to_string(node->key).c_str(), static_cast<int>(node->x) - 10, static_cast<int>(node->y) - 10, 20, WHITE);
+    DrawCircleLines(static_cast<int>(node->x), static_cast<int>(node->y), radius, DARKGRAY); // Add outline
+    DrawText(std::to_string(node->key).c_str(), static_cast<int>(node->x) - 10, static_cast<int>(node->y) - 10, 20, BLACK); // Black text for contrast
 
     if (node->left) {
         DrawLine(static_cast<int>(node->x), static_cast<int>(node->y), static_cast<int>(node->left->x), static_cast<int>(node->left->y), LIGHTGRAY);

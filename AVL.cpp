@@ -54,6 +54,8 @@ int main() {
     int searchIndex = 0;
     bool searching = false;
     bool inserting = false;
+    std::string searchResult = "";
+    int lastSearchValue = 0; // Added to store the value being searched
 
     Rectangle insertButton = { 20, screenHeight - 120, 100, 40 };
     Rectangle deleteButton = { 130, screenHeight - 120, 100, 40 };
@@ -107,6 +109,7 @@ int main() {
             searchIndex = 0;
             searchTimer = 0.0f;
             inserting = true;
+            searchResult = ""; // Clear search result on insert
         }
         if (deleteClicked && inputIndex > 0) {
             int value = atoi(inputBuffer);
@@ -115,15 +118,17 @@ int main() {
             inputBuffer[0] = '\0';
             searching = false;
             inserting = false;
+            searchResult = ""; // Clear search result on delete
         }
         if (searchClicked && inputIndex > 0) {
-            int value = atoi(inputBuffer);
-            tree.search(value, searchPath);
+            lastSearchValue = atoi(inputBuffer); // Store the value being searched
+            tree.search(lastSearchValue, searchPath);
             inputIndex = 0;
             inputBuffer[0] = '\0';
             searchIndex = 0;
             searchTimer = 0.0f;
             searching = true;
+            searchResult = "Searching for " + std::to_string(lastSearchValue) + "...";
         }
         if (clearClicked) {
             tree.clear();
@@ -132,14 +137,17 @@ int main() {
             affectedPath.clear();
             searching = false;
             inserting = false;
+            searchResult = ""; // Clear search result on clear
         }
         if (randomClicked) {
+            tree.clear(); // Clear before generating random tree
             tree.generateRandom(10, 1, 100);
             searchPath.clear();
             insertPath.clear();
             affectedPath.clear();
             searching = false;
             inserting = false;
+            searchResult = ""; // Clear search result on random
         }
         if (undoClicked) {
             Node* affectedNode = tree.undo(affectedPath);
@@ -147,6 +155,7 @@ int main() {
             inserting = false;
             searchPath.clear();
             insertPath.clear();
+            searchResult = ""; // Clear search result on undo
         }
         if (redoClicked) {
             Node* affectedNode = tree.redo(affectedPath);
@@ -154,6 +163,7 @@ int main() {
             inserting = false;
             searchPath.clear();
             insertPath.clear();
+            searchResult = ""; // Clear search result on redo
         }
 
         if ((searching || inserting) && !searchPath.empty()) {
@@ -163,6 +173,14 @@ int main() {
                 searchTimer = 0.0f;
                 if (searchIndex >= static_cast<int>(searchPath.size())) {
                     searchIndex = 0;
+                    if (searching) {
+                        if (!searchPath.empty() && searchPath.back()->key == lastSearchValue) {
+                            searchResult = "Node " + std::to_string(lastSearchValue) + " is found";
+                        }
+                        else {
+                            searchResult = "Node " + std::to_string(lastSearchValue) + " is not found";
+                        }
+                    }
                     searching = false;
                     inserting = false;
                 }
@@ -194,12 +212,12 @@ int main() {
         drawButton(randomButton, "Random", ORANGE, randomHover, randomClicked);
         drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
-        // afdyagudgasd
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
         DrawRectangleLinesEx(inputBox, 2, BLACK);
         DrawText(inputBuffer, inputBox.x + 5, inputBox.y + 10, 30, BLACK);
         DrawText("Enter number, then click action", inputBox.x, inputBox.y + 40, 20, DARKGRAY);
+        DrawText(searchResult.c_str(), 20, screenHeight - 160, 20, DARKGRAY); // Display search result
 
         EndDrawing();
     }
