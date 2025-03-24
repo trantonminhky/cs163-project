@@ -1,8 +1,10 @@
 #include "UI.h"
 
+
+
 UI::UI(HashTable* ht) : hashTable(ht) {
-    for (int i = 0; i < 17; i++) {
-        indexRects[i] = {10, float(110 + i * 40), 40, 30};  // Larger size: 50x50, starting at y=150, spacing 60
+    for (int i = 0; i < TABLE_SIZE; i++) {
+        indexRects[i] = {10, float(110 + i * 40), 40, 30};  
     }
 }
 
@@ -46,7 +48,7 @@ if (animState != AnimationState::NONE) {
                     if (pendingInsertValue != -1) {  // Insert
                         hashTable->insert(pendingInsertValue);
                         pendingInsertValue = -1;
-                    } else if (pendingRemoveValue != -1) {  // Remove (new variable, see below)
+                    } else if (pendingRemoveValue != -1) {  // Remove
                         hashTable->remove(pendingRemoveValue);
                         pendingRemoveValue = -1;
                     }  // Find doesn’t need a final action
@@ -153,7 +155,6 @@ else if (CheckCollisionPointRec(mousePoint, findBtn) && value >= 0) {
             resultMessageTimer = 120;
             inputActive = false;  // Turn off input after action
         }
-        // Removed the else clause that set inputActive = true
     }
     
     if (resultMessageTimer > 0) resultMessageTimer--;
@@ -192,19 +193,20 @@ void UI::drawInputBox() const {
 }
 
 void UI::drawTable() const {
-    const int slotHeight = 40;  // Increased from 40 to match larger spacing
+    const int slotHeight = 40; 
     const int slotWidth = 50;
     
-    for (int i = 0; i < 17; i++) {
+    for (int i = 0; i < TABLE_SIZE; i++) {
         // Draw index as a rectangle
         DrawRectangleRec(indexRects[i], BLACK);
         if (animState == AnimationState::INDEX && i == animIndex) {
             DrawRectangleLinesEx(indexRects[i], 3, YELLOW);
         }
-        DrawText(TextFormat("%d", i), indexRects[i].x + 10, indexRects[i].y + 5, 20, WHITE);  // Centered in rectangle
+        DrawText(TextFormat("%d", i), indexRects[i].x + 10, indexRects[i].y + 5, indexRects[i].height - 10, WHITE); 
+
         
         Node* current = hashTable->getTable()[i];
-        int xOffset = 70;  // Increased from 40 to account for wider index rectangle
+        int xOffset = 70; 
         int nodeIndex = 0;
         while (current) {
             Rectangle valueRect = {float(xOffset), float(110 + i * slotHeight), slotWidth, 30};
@@ -219,11 +221,8 @@ void UI::drawTable() const {
             if (animState == AnimationState::NEW_NODE && i == animIndex && !current->next && pendingInsertValue!=-1) {
                 DrawRectangleLinesEx(valueRect, 3, YELLOW);
             }
-            //DrawRectangle(xOffset, 110 + i * slotHeight, slotWidth, 30, LIGHTGRAY);  // Adjusted y-position to 150
             DrawText(TextFormat("%d", current->value), xOffset + 5, 115 + i * slotHeight, 20, BLACK);
-            //if (current->next) {
                 DrawLine(xOffset - 20, 125 + i * slotHeight, xOffset, 125 + i * slotHeight, BLACK);
-            //}
             xOffset += 70;
             current = current->next;
             nodeIndex++;

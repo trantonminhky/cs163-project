@@ -10,10 +10,10 @@ struct Node {
 
 class HashTable {
 private:
-    static const int TABLE_SIZE = 17;
+    static const int TABLE_SIZE = 7; // also change in UI.h
     std::vector<Node*> table;
     
-//abcbcbabcab
+
 public:
     int hashFunction(int value) const;
     HashTable();
