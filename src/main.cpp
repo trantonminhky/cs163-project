@@ -1,7 +1,7 @@
 //#include "C:\raylib\raylib\src\raylib.h"
 #include "../include/raylib.h"
 #include "HashTable.h"
-#include "UI.h"
+// #include "UI.h"
 
 int main() {
     const Color backgroundColor = {245, 245, 245, 255};
