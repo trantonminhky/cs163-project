@@ -377,7 +377,8 @@ void AVLTree::LoadFromFile(std::string& searchResult) {
 
     int value;
     int count = 0;
-    while (fscanf(file, "%d", &value) == 1) {
+    // Replaced fscanf with fscanf_s for Visual Studio
+    while (fscanf_s(file, "%d", &value) == 1) {
         insert(value);
         count++;
     }

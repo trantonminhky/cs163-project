@@ -32,12 +32,12 @@ void drawButton(Rectangle button, const char* text, Color baseColor, bool hover,
 }
 
 int main() {
-    const int screenWidth = 1400; // Increased to ensure all buttons are visible
+    const int screenWidth = 1400;
     const int screenHeight = 1000;
 
     std::cout << "Attempting to initialize window..." << std::endl;
     InitWindow(screenWidth, screenHeight, "AVL Tree Visualization");
-    SetWindowMinSize(screenWidth, screenHeight); // Enforce minimum size
+    SetWindowMinSize(screenWidth, screenHeight);
     if (!IsWindowReady()) {
         std::cout << "Failed to initialize window! Check your Raylib installation." << std::endl;
         return -1;
@@ -66,12 +66,12 @@ int main() {
     Rectangle randomButton = { 460, screenHeight - 120, 100, 40 };
     Rectangle undoButton = { 570, screenHeight - 120, 100, 40 };
     Rectangle redoButton = { 680, screenHeight - 120, 100, 40 };
-    Rectangle loadFileButton = { 790, screenHeight - 120, 100, 40 };
+    Rectangle FileButton = { 790, screenHeight - 120, 100, 40 };
     Rectangle inputBox = { 20, screenHeight - 60, 100, 40 }; 
 
     // Color definitions
     Color TEAL = { 0, 128, 128, 255 };
-    Color yellow = { 255, 255, 0, 255 }; 
+    Color Mediumblue = { 0, 102, 204, 255 };
 
     while (!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
@@ -95,7 +95,7 @@ int main() {
         bool randomHover = CheckCollisionPointRec(GetMousePosition(), randomButton);
         bool undoHover = CheckCollisionPointRec(GetMousePosition(), undoButton);
         bool redoHover = CheckCollisionPointRec(GetMousePosition(), redoButton);
-        bool loadFileHover = CheckCollisionPointRec(GetMousePosition(), loadFileButton);
+        bool FileHover = CheckCollisionPointRec(GetMousePosition(), FileButton);
 
         bool insertClicked = isButtonClicked(insertButton);
         bool deleteClicked = isButtonClicked(deleteButton);
@@ -104,7 +104,7 @@ int main() {
         bool randomClicked = isButtonClicked(randomButton);
         bool undoClicked = isButtonClicked(undoButton);
         bool redoClicked = isButtonClicked(redoButton);
-        bool loadFileClicked = isButtonClicked(loadFileButton);
+        bool FileClicked = isButtonClicked(FileButton);
 
         if (insertClicked && inputIndex > 0) {
             int value = atoi(inputBuffer);
@@ -172,7 +172,7 @@ int main() {
             insertPath.clear();
             searchResult = "";
         }
-        if (loadFileClicked) {
+        if (FileClicked) {
             tree.LoadFromFile(searchResult);
             searchPath.clear();
             inserting = false;
@@ -228,7 +228,7 @@ int main() {
         drawButton(randomButton, "Random", ORANGE, randomHover, randomClicked);
         drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
-        drawButton(loadFileButton, "Load File", yellow, loadFileHover, loadFileClicked);
+        drawButton(FileButton, "File", Mediumblue, FileHover, FileClicked);
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
         DrawRectangleLinesEx(inputBox, 2, BLACK);
