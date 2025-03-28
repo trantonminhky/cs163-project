@@ -3,6 +3,7 @@
 #include <cmath>
 #include <string>
 #include <random>
+#include <stdio.h>
 
 Node::Node(int value) : key(value), height(1), left(nullptr), right(nullptr), x(0), y(0), targetX(0), targetY(0), isDying(false) {}
 
@@ -10,7 +11,7 @@ AVLTree::AVLTree() : root(nullptr) {}
 
 AVLTree::~AVLTree() {
     deleteTree(root);
-    clearHistory(); // Ensure all trees in history and redoStack are deleted
+    clearHistory();
 }
 
 void AVLTree::deleteTree(Node* node) {
@@ -201,11 +202,9 @@ Node* AVLTree::undo(std::vector<Node*>& affectedPath) {
     int value = operation.second.second;
     history.pop();
 
-    // Store the current state for redo
     Node* currentState = deepCopy(root);
     redoStack.push({ currentState, {wasInsert, value} });
 
-    // Delete the current tree and restore the previous state
     deleteTree(root);
     root = previousState;
 
@@ -223,11 +222,9 @@ Node* AVLTree::redo(std::vector<Node*>& affectedPath) {
     int value = operation.second.second;
     redoStack.pop();
 
-    // Store the current state for undo
     Node* currentState = deepCopy(root);
     history.push({ currentState, {wasInsert, value} });
 
-    // Delete the current tree and restore the redo state
     deleteTree(root);
     root = redoState;
 
@@ -264,10 +261,9 @@ void AVLTree::calculatePositions(Node* node, int x, int y, int xOffset, int dept
     node->targetX = static_cast<float>(x);
     node->targetY = static_cast<float>(y);
 
-    // Increase vertical spacing and adjust xOffset dynamically
-    int verticalSpacing = 100; // Increased from 80
-    int adjustedXOffset = xOffset / (depth > 1 ? depth : 1); // Prevent division by zero
-    adjustedXOffset = std::max(100, adjustedXOffset); // Minimum spacing of 100
+    int verticalSpacing = 100;
+    int adjustedXOffset = xOffset / (depth > 1 ? depth : 1);
+    adjustedXOffset = std::max(100, adjustedXOffset);
 
     if (node->left)
         calculatePositions(node->left, x - adjustedXOffset, y + verticalSpacing, xOffset, depth + 1);
@@ -292,19 +288,19 @@ void AVLTree::updateAnimation(float deltaTime) {
     for (Node* node : nodes) {
         float dx = node->targetX - node->x;
         float dy = node->targetY - node->y;
-        node->x += dx * deltaTime * 2.0f; // Changed from 5.0f to 2.0f
-        node->y += dy * deltaTime * 2.0f; // Changed from 5.0f to 2.0f
+        node->x += dx * deltaTime * 2.0f;
+        node->y += dy * deltaTime * 2.0f;
     }
 }
 
 void AVLTree::drawNode(Node* node, const std::vector<Node*>& highlightPath) {
     if (!node) return;
 
-    Color color = { 100, 200, 150, 255 }; // Soft teal for default nodes
+    Color color = { 100, 200, 150, 255 };
     bool isHighlighted = false;
     for (const Node* pathNode : highlightPath) {
         if (node == pathNode) {
-            color = { 255, 165, 0, 255 }; // Bright orange for highlighted nodes
+            color = { 255, 165, 0, 255 };
             isHighlighted = true;
             break;
         }
@@ -314,8 +310,8 @@ void AVLTree::drawNode(Node* node, const std::vector<Node*>& highlightPath) {
     float radius = isHighlighted ? 20 * pulse : 20;
 
     DrawCircle(static_cast<int>(node->x), static_cast<int>(node->y), radius, color);
-    DrawCircleLines(static_cast<int>(node->x), static_cast<int>(node->y), radius, DARKGRAY); // Add outline
-    DrawText(std::to_string(node->key).c_str(), static_cast<int>(node->x) - 10, static_cast<int>(node->y) - 10, 20, BLACK); // Black text for contrast
+    DrawCircleLines(static_cast<int>(node->x), static_cast<int>(node->y), radius, DARKGRAY);
+    DrawText(std::to_string(node->key).c_str(), static_cast<int>(node->x) - 10, static_cast<int>(node->y) - 10, 20, BLACK);
 
     if (node->left) {
         DrawLine(static_cast<int>(node->x), static_cast<int>(node->y), static_cast<int>(node->left->x), static_cast<int>(node->left->y), LIGHTGRAY);
@@ -342,4 +338,50 @@ void AVLTree::generateRandom(int count, int minValue, int maxValue) {
         int randomKey = dis(gen);
         insert(randomKey);
     }
+}
+
+void AVLTree::LoadFromFile(std::string& searchResult) {
+    const char* filters[] = { "*.txt" };
+    const char* filePath = tinyfd_openFileDialog(
+        "Select a Text File",
+        "",
+        1,
+        filters,
+        "Text Files",
+        0
+    );
+
+    if (!filePath) {
+        searchResult = "File selection canceled.";
+        return;
+    }
+
+#ifdef _WIN32
+    std::wstring_convert<std::codecvt_utf8_utf16<wchar_t>> converter;
+    std::wstring wideFilePath = converter.from_bytes(filePath);
+    FILE* file = nullptr;
+    errno_t err = _wfopen_s(&file, wideFilePath.c_str(), L"r");
+    if (err != 0 || file == nullptr) {
+        searchResult = "Failed to open file: " + std::string(filePath);
+        return;
+    }
+#else
+    FILE* file = fopen(filePath, "r");
+    if (!file) {
+        searchResult = "Failed to open file: " + std::string(filePath);
+        return;
+    }
+#endif
+
+    clear();
+
+    int value;
+    int count = 0;
+    while (fscanf(file, "%d", &value) == 1) {
+        insert(value);
+        count++;
+    }
+
+    fclose(file);
+    searchResult = "Loaded " + std::to_string(count) + " values from " + std::string(filePath);
 }

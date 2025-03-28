@@ -32,16 +32,17 @@ void drawButton(Rectangle button, const char* text, Color baseColor, bool hover,
 }
 
 int main() {
-    const int screenWidth = 1200;
+    const int screenWidth = 1400; // Increased to ensure all buttons are visible
     const int screenHeight = 1000;
 
     std::cout << "Attempting to initialize window..." << std::endl;
     InitWindow(screenWidth, screenHeight, "AVL Tree Visualization");
+    SetWindowMinSize(screenWidth, screenHeight); // Enforce minimum size
     if (!IsWindowReady()) {
         std::cout << "Failed to initialize window! Check your Raylib installation." << std::endl;
         return -1;
     }
-    std::cout << "Window initialized successfully." << std::endl;
+    std::cout << "Window initialized successfully: " << GetScreenWidth() << "x" << GetScreenHeight() << std::endl;
     SetTargetFPS(60);
 
     AVLTree tree;
@@ -55,8 +56,9 @@ int main() {
     bool searching = false;
     bool inserting = false;
     std::string searchResult = "";
-    int lastSearchValue = 0; // Added to store the value being searched
+    int lastSearchValue = 0;
 
+    // Button definitions
     Rectangle insertButton = { 20, screenHeight - 120, 100, 40 };
     Rectangle deleteButton = { 130, screenHeight - 120, 100, 40 };
     Rectangle searchButton = { 240, screenHeight - 120, 100, 40 };
@@ -64,9 +66,12 @@ int main() {
     Rectangle randomButton = { 460, screenHeight - 120, 100, 40 };
     Rectangle undoButton = { 570, screenHeight - 120, 100, 40 };
     Rectangle redoButton = { 680, screenHeight - 120, 100, 40 };
-    Rectangle inputBox = { 20, screenHeight - 60, 100, 40 };
+    Rectangle loadFileButton = { 790, screenHeight - 120, 100, 40 };
+    Rectangle inputBox = { 20, screenHeight - 60, 100, 40 }; 
 
+    // Color definitions
     Color TEAL = { 0, 128, 128, 255 };
+    Color yellow = { 255, 255, 0, 255 }; 
 
     while (!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
@@ -90,6 +95,7 @@ int main() {
         bool randomHover = CheckCollisionPointRec(GetMousePosition(), randomButton);
         bool undoHover = CheckCollisionPointRec(GetMousePosition(), undoButton);
         bool redoHover = CheckCollisionPointRec(GetMousePosition(), redoButton);
+        bool loadFileHover = CheckCollisionPointRec(GetMousePosition(), loadFileButton);
 
         bool insertClicked = isButtonClicked(insertButton);
         bool deleteClicked = isButtonClicked(deleteButton);
@@ -98,6 +104,7 @@ int main() {
         bool randomClicked = isButtonClicked(randomButton);
         bool undoClicked = isButtonClicked(undoButton);
         bool redoClicked = isButtonClicked(redoButton);
+        bool loadFileClicked = isButtonClicked(loadFileButton);
 
         if (insertClicked && inputIndex > 0) {
             int value = atoi(inputBuffer);
@@ -109,7 +116,7 @@ int main() {
             searchIndex = 0;
             searchTimer = 0.0f;
             inserting = true;
-            searchResult = ""; // Clear search result on insert
+            searchResult = "";
         }
         if (deleteClicked && inputIndex > 0) {
             int value = atoi(inputBuffer);
@@ -118,10 +125,10 @@ int main() {
             inputBuffer[0] = '\0';
             searching = false;
             inserting = false;
-            searchResult = ""; // Clear search result on delete
+            searchResult = "";
         }
         if (searchClicked && inputIndex > 0) {
-            lastSearchValue = atoi(inputBuffer); // Store the value being searched
+            lastSearchValue = atoi(inputBuffer);
             tree.search(lastSearchValue, searchPath);
             inputIndex = 0;
             inputBuffer[0] = '\0';
@@ -137,17 +144,17 @@ int main() {
             affectedPath.clear();
             searching = false;
             inserting = false;
-            searchResult = ""; // Clear search result on clear
+            searchResult = "";
         }
         if (randomClicked) {
-            tree.clear(); // Clear before generating random tree
+            tree.clear();
             tree.generateRandom(10, 1, 100);
             searchPath.clear();
             insertPath.clear();
             affectedPath.clear();
             searching = false;
             inserting = false;
-            searchResult = ""; // Clear search result on random
+            searchResult = "";
         }
         if (undoClicked) {
             Node* affectedNode = tree.undo(affectedPath);
@@ -155,7 +162,7 @@ int main() {
             inserting = false;
             searchPath.clear();
             insertPath.clear();
-            searchResult = ""; // Clear search result on undo
+            searchResult = "";
         }
         if (redoClicked) {
             Node* affectedNode = tree.redo(affectedPath);
@@ -163,7 +170,13 @@ int main() {
             inserting = false;
             searchPath.clear();
             insertPath.clear();
-            searchResult = ""; // Clear search result on redo
+            searchResult = "";
+        }
+        if (loadFileClicked) {
+            tree.LoadFromFile(searchResult);
+            searchPath.clear();
+            inserting = false;
+            searching = false;
         }
 
         if ((searching || inserting) && !searchPath.empty()) {
@@ -192,6 +205,9 @@ int main() {
         BeginDrawing();
         ClearBackground(WHITE);
 
+        // Debug window size
+        DrawText(TextFormat("Window: %d x %d", GetScreenWidth(), GetScreenHeight()), 10, 10, 20, BLACK);
+
         std::vector<Node*> currentHighlight;
         if (searching || inserting) {
             if (searchIndex < static_cast<int>(searchPath.size())) {
@@ -212,12 +228,13 @@ int main() {
         drawButton(randomButton, "Random", ORANGE, randomHover, randomClicked);
         drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
+        drawButton(loadFileButton, "Load File", yellow, loadFileHover, loadFileClicked);
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
         DrawRectangleLinesEx(inputBox, 2, BLACK);
         DrawText(inputBuffer, inputBox.x + 5, inputBox.y + 10, 30, BLACK);
         DrawText("Enter number, then click action", inputBox.x, inputBox.y + 40, 20, DARKGRAY);
-        DrawText(searchResult.c_str(), 20, screenHeight - 160, 20, DARKGRAY); // Display search result
+        DrawText(searchResult.c_str(), 20, screenHeight - 160, 20, DARKGRAY);
 
         EndDrawing();
     }

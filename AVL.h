@@ -4,6 +4,10 @@
 #include <vector>
 #include <stack>
 #include <utility>
+#include "tinyfiledialogs.h"
+#include <locale>
+#include <codecvt>
+#include <string>
 
 struct Node {
     int key;
@@ -19,7 +23,6 @@ struct Node {
 class AVLTree {
 private:
     Node* root;
-    // Store tree state (root pointer) and operation
     std::stack<std::pair<Node*, std::pair<bool, int>>> history; // <tree state, <wasInsert, value>>
     std::stack<std::pair<Node*, std::pair<bool, int>>> redoStack;
 
@@ -34,7 +37,7 @@ private:
     void updateHeight(Node* node);
     void calculatePositions(Node* node, int x, int y, int xOffset, int depth);
     void drawNode(Node* node, const std::vector<Node*>& highlightPath);
-    Node* deepCopy(Node* node); // New method to copy the tree
+    Node* deepCopy(Node* node);
 
 public:
     AVLTree();
@@ -49,6 +52,7 @@ public:
     void generateRandom(int count, int minValue, int maxValue);
     void updateAnimation(float deltaTime);
     void draw(const std::vector<Node*>& highlightPath);
+    void LoadFromFile(std::string& searchResult); // Already included
 };
 
 #endif
