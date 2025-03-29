@@ -11,14 +11,14 @@
                 "PLATFORM=PLATFORM_DESKTOP",
                 "BUILD_MODE=DEBUG",
                 "PROJECT_NAME=${fileBasenameNoExtension}",
-                "OBJS=AVL.cpp AVLfunction.cpp tinyfiledialogs.c"
+                "OBJS=LinkedList.cpp LLfunction.cpp"
             ],
             "windows": {
                 "command": "mingw32-make.exe",
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
-                    "OBJS=AVL.cpp AVLfunction.cpp tinyfiledialogs.c",
+                    "OBJS=LinkedList.cpp LLfunction.cpp",
                     "BUILD_MODE=DEBUG"
                 ],
             },
@@ -26,7 +26,7 @@
                 "args": [
                     "RAYLIB_PATH=<path_to_raylib>/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
-                    "OBJS=AVL.cpp AVLfunction.cpp tinyfiledialogs.c",
+                    "OBJS=LinkedList.cpp LLfunction.cpp",
                     "BUILD_MODE=DEBUG"
                 ],
             },
@@ -45,21 +45,21 @@
             "args": [
                 "PLATFORM=PLATFORM_DESKTOP",
                 "PROJECT_NAME=${fileBasenameNoExtension}",
-                "OBJS=AVL.cpp AVLfunction.cpp tinyfiledialogs.c"
+                "OBJS=LinkedList.cpp LLfunction.cpp"
             ],
             "windows": {
                 "command": "mingw32-make.exe",
                 "args": [
                     "RAYLIB_PATH=C:/raylib/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
-                    "OBJS=AVL.cpp AVLfunction.cpp tinyfiledialogs.c"
+                    "OBJS=LinkedList.cpp LLfunction.cpp"
                 ],
             },
             "osx": {
                 "args": [
                     "RAYLIB_PATH=<path_to_raylib>/raylib",
                     "PROJECT_NAME=${fileBasenameNoExtension}",
-                    "OBJS=AVL.cpp AVLfunction.cpp tinyfiledialogs.c"
+                    "OBJS=LinkedList.cpp LLfunction.cpp"
                 ],
             },
             "group": "build",
