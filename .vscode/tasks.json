@@ -66,6 +66,30 @@
             "problemMatcher": [
                 "$gcc"
             ]
-        }
+        },
+		{
+			"label": "build with g++",
+			"type": "process",
+			"command": "g++",
+			"args": [
+				"AVL.cpp",
+				"AVLfunction.cpp",
+				"tinyfiledialogs.c",
+				"-o", "main.exe",
+				"-IC:/raylib/raylib/src",
+				"-LC:/raylib/raylib/src",
+				"-lraylib",
+				"-lopengl32",
+				"-lgdi32",
+				"-lwinmm",
+				"-lcomdlg32",
+				"-mwindows"
+			],
+			"group": {
+				"kind": "build",
+				"isDefault": false
+			},
+			"problemMatcher": "$gcc"
+		}
     ]
 }
