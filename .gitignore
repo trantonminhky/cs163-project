@@ -11,3 +11,4 @@ resources
 main.code-workspace
 Makefile
 Makefile.Android
+main.exe
