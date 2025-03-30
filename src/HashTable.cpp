@@ -266,33 +266,44 @@ if (animState == AnimationState::NONE && !insertQueue.empty()) {
             inputActive = false;  // Turn off input after action
         }
         else if (CheckCollisionPointRec(mousePoint, loadBtn)) {
-        std::ifstream file("D:\\c++\\DSvsl - Copy\\src\\numbers.txt");
-        if (file.is_open()) {
-        insertQueue.clear();
-        int num;
-        if (instantMode) {
-            while (file >> num) {
-                if (num >= 0 && num <= 999) {
-                    hashTable->insert(num);  // Insert instantly
-                }
-            }
-            resultMessage = "Numbers loaded instantly";
-        } else {
-            while (file >> num) {
-                if (num >= 0 && num <= 999) {
-                    insertQueue.push_back(num);  // Queue for animation
+            const char* filePath = tinyfd_openFileDialog(
+                "Select a Text File",       // Title
+                "",                         // Default path (empty = current directory)
+                1,                          // Number of filter patterns
+                (const char*[]){"*.txt"},   // Filter patterns
+                "Text files",               // Filter description
+                0                           // 0 = single file selection
+            );
+            if (filePath) {  // If a file was selected
+                std::ifstream file(filePath);
+                if (file.is_open()) {
+                    insertQueue.clear();
+                    int num;
+                    if (instantMode) {
+                        while (file >> num) {
+                            if (num >= 0 && num <= 999) {
+                                hashTable->insert(num);
+                            }
                         }
+                        resultMessage = "Numbers loaded instantly from " + std::string(filePath);
+                    } else {
+                        while (file >> num) {
+                            if (num >= 0 && num <= 999) {
+                                insertQueue.push_back(num);
+                            }
+                        }
+                        resultMessage = "Loading numbers from " + std::string(filePath);
                     }
-                    resultMessage = "Loading numbers from file";
+                    file.close();
+                } else {
+                    resultMessage = "Failed to open selected file";
                 }
-                file.close();
-                resultMessageTimer = 120;
-        } else {
-                resultMessage = "Failed to open numbers.txt";
-                resultMessageTimer = 120;
+            } else {
+                resultMessage = "No file selected";
             }
+            resultMessageTimer = 120;
             inputActive = false;
-        }
+}
         else if (CheckCollisionPointRec(mousePoint, instantBtn)) {
             instantMode = !instantMode;  // Toggle mode
             resultMessage = instantMode ? "Instant Mode ON" : "Instant Mode OFF";
