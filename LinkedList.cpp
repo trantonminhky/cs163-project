@@ -1,5 +1,5 @@
 #include "raylib.h"
-#include "LinkedListHeader.h"
+#include "LinkedList.h"
 #include <vector>
 #include <string>
 #include <iostream>
@@ -32,14 +32,17 @@ void drawButton(Rectangle button, const char* text, Color baseColor, bool hover,
 }
 
 int main() {
-    const int screenWidth = 1200;
-    const int screenHeight = 800;
+    const int screenWidth = 1400;
+    const int screenHeight = 1000;
 
     InitWindow(screenWidth, screenHeight, "Linked List Visualization");
+    SetWindowMinSize(screenWidth, screenHeight);
+    SetWindowSize(screenWidth, screenHeight);
     if (!IsWindowReady()) {
-        std::cout << "Failed to initialize window!" << std::endl;
+        std::cout << "Failed to initialize window! Check your Raylib installation." << std::endl;
         return -1;
     }
+    std::cout << "Window initialized successfully: " << GetScreenWidth() << "x" << GetScreenHeight() << std::endl;
     SetTargetFPS(60);
 
     LinkedList list;
@@ -62,9 +65,11 @@ int main() {
     Rectangle randomButton = { 460, screenHeight - 120, 100, 40 };
     Rectangle undoButton = { 570, screenHeight - 120, 100, 40 };
     Rectangle redoButton = { 680, screenHeight - 120, 100, 40 };
+    Rectangle loadFileButton = { 790, screenHeight - 120, 100, 40 };
     Rectangle inputBox = { 20, screenHeight - 60, 100, 40 };
 
     Color TEAL = { 0, 128, 128, 255 };
+    Color loadFileColor = { 0, 102, 204, 255 }; 
 
     while (!WindowShouldClose()) {
         float deltaTime = GetFrameTime();
@@ -88,6 +93,7 @@ int main() {
         bool randomHover = CheckCollisionPointRec(GetMousePosition(), randomButton);
         bool undoHover = CheckCollisionPointRec(GetMousePosition(), undoButton);
         bool redoHover = CheckCollisionPointRec(GetMousePosition(), redoButton);
+        bool loadFileHover = CheckCollisionPointRec(GetMousePosition(), loadFileButton);
 
         bool insertClicked = isButtonClicked(insertButton);
         bool deleteClicked = isButtonClicked(deleteButton);
@@ -96,6 +102,7 @@ int main() {
         bool randomClicked = isButtonClicked(randomButton);
         bool undoClicked = isButtonClicked(undoButton);
         bool redoClicked = isButtonClicked(redoButton);
+        bool loadFileClicked = isButtonClicked(loadFileButton);
 
         if (insertClicked && inputIndex > 0) {
             int value = atoi(inputBuffer);
@@ -139,7 +146,7 @@ int main() {
         }
         if (randomClicked) {
             list.clear();
-            list.generateRandom(8, 1, 100);
+            list.generateRandom(10, 1, 100);
             searchPath.clear();
             insertPath.clear();
             affectedPath.clear();
@@ -148,7 +155,7 @@ int main() {
             searchResult = "";
         }
         if (undoClicked) {
-            list.undo(affectedPath);
+            Node* affectedNode = list.undo(affectedPath);
             searching = false;
             inserting = false;
             searchPath.clear();
@@ -156,12 +163,18 @@ int main() {
             searchResult = "";
         }
         if (redoClicked) {
-            list.redo(affectedPath);
+            Node* affectedNode = list.redo(affectedPath);
             searching = false;
             inserting = false;
             searchPath.clear();
             insertPath.clear();
             searchResult = "";
+        }
+        if (loadFileClicked) {
+            list.LoadFromFile(searchResult);
+            searchPath.clear();
+            inserting = false;
+            searching = false;
         }
 
         if ((searching || inserting) && !searchPath.empty()) {
@@ -190,15 +203,6 @@ int main() {
         BeginDrawing();
         ClearBackground(WHITE);
 
-        // Draw background message
-        const char* backgroundText = "Visualize Singly Linked List";
-        Vector2 textSize = MeasureTextEx(GetFontDefault(), backgroundText, 50, 1);
-        DrawText(backgroundText,
-            screenWidth / 2 - textSize.x / 2,
-            screenHeight / 2 - textSize.y / 2,
-            50,
-            Fade(LIGHTGRAY, 0.3f)); // Faded to act as watermark
-
         std::vector<Node*> currentHighlight;
         if (searching || inserting) {
             if (searchIndex < static_cast<int>(searchPath.size())) {
@@ -219,6 +223,7 @@ int main() {
         drawButton(randomButton, "Random", ORANGE, randomHover, randomClicked);
         drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
+        drawButton(loadFileButton, "File", loadFileColor, loadFileHover, loadFileClicked);
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
         DrawRectangleLinesEx(inputBox, 2, BLACK);
