@@ -5,4 +5,4 @@ AVL.sln
 AVL.vcxproj
 AVL.vcxproj.filters
 AVL.vcxproj.user
-main.exe
+*.exe
