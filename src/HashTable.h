@@ -1,5 +1,5 @@
-#include "../include/raylib.h"
-#include "../include/tinyfiledialogs/tinyfiledialogs.h"
+#include "raylib.h"
+#include "tinyfiledialogs.h"
 #include<string>
 #include<cstring>
 #include<vector>

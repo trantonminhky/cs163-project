@@ -266,11 +266,12 @@ if (animState == AnimationState::NONE && !insertQueue.empty()) {
             inputActive = false;  // Turn off input after action
         }
         else if (CheckCollisionPointRec(mousePoint, loadBtn)) {
+            static const char* filterPaterns[] = {"*.txt", nullptr};
             const char* filePath = tinyfd_openFileDialog(
                 "Select a Text File",       // Title
                 "",                         // Default path (empty = current directory)
                 1,                          // Number of filter patterns
-                (const char*[]){"*.txt"},   // Filter patterns
+                filterPaterns,   // Filter patterns
                 "Text files",               // Filter description
                 0                           // 0 = single file selection
             );
