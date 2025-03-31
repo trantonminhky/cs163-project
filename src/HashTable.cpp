@@ -271,11 +271,11 @@ if (animState == AnimationState::NONE && !insertQueue.empty()) {
                 "Select a Text File",       // Title
                 "",                         // Default path (empty = current directory)
                 1,                          // Number of filter patterns
-                filterPaterns,   // Filter patterns
+                filterPaterns,              // Filter patterns
                 "Text files",               // Filter description
                 0                           // 0 = single file selection
             );
-            if (filePath) {  // If a file was selected
+            if (filePath) {
                 std::ifstream file(filePath);
                 if (file.is_open()) {
                     insertQueue.clear();

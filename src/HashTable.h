@@ -18,7 +18,7 @@ struct Node {
 
 class HashTable {
 private:
-    static const int TABLE_SIZE = 19; // also change in UI.h
+    static const int TABLE_SIZE = 19; // also change in UI
     std::vector<Node*> table;
     
 
@@ -39,12 +39,10 @@ public:
 #ifndef UI_H
 #define UI_H
 
-// #include "HashTable.h"
-
 
 class UI {
 public:
-    static const int TABLE_SIZE = 19; //also change in HashTable.h
+    static const int TABLE_SIZE = 19; //also change in HashTable
     UI(HashTable* ht);
     void update();
     void draw();
