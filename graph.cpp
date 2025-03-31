@@ -163,7 +163,7 @@ void GraphApp::Update()
     if (currentState == KRUSKAL)
     {
         kruskalTimer += GetFrameTime();
-        if (kruskalTimer >= 0.5f)
+        if (kruskalTimer >= 1.0f) // Changed from 0.5f to 1.0f to slow down the steps
         {
             kruskalTimer = 0.0f;
             RunKruskalStepByStep();
@@ -772,8 +772,8 @@ void GraphApp::Draw()
 
         if (e.highlighted)
         {
-            lineColor = GREEN;
-            textColor = GREEN;
+            lineColor = RED; // Changed from GREEN to RED
+            textColor = RED; // Changed from GREEN to RED
         }
         else if (e.blurred)
         {
