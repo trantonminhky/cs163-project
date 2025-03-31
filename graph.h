@@ -6,7 +6,7 @@
 #include <string>
 #include "tinyfiledialogs.h"
 
-using namespace std; // Added this line and removed std:: from below
+using namespace std;
 
 struct Vertex
 {
