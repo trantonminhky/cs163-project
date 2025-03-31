@@ -6,7 +6,7 @@
 #include <string>
 #include "tinyfiledialogs.h"
 
-using namespace std;
+using namespace std; // Added this line and removed std:: from below
 
 struct Vertex
 {
@@ -29,15 +29,15 @@ struct Edge
 
 struct GraphState
 {
-    vector<Vertex> vertices;
-    vector<Edge> edges;
+    vector<Vertex> vertices; 
+    vector<Edge> edges;      
 };
 
 class GraphApp
 {
 private:
-    vector<Vertex> vertices;
-    vector<Edge> edges;
+    vector<Vertex> vertices; 
+    vector<Edge> edges;      
     char inputText[32];
     bool showInputBox;
     int screenWidth;
@@ -54,16 +54,16 @@ private:
     };
     State currentState;
     int draggedVertex;
-    string searchResult;
+    string searchResult; 
     bool showSearchMessage;
     float kruskalTimer;
     int kruskalStep;
     vector<Edge> mstEdges;
     bool showTable;
     int totalWeight;
-    vector<GraphState> undoStack;
-    vector<GraphState> redoStack;
-    vector<int> parent;
+    vector<GraphState> undoStack; 
+    vector<GraphState> redoStack; 
+    vector<int> parent;           
 
 public:
     GraphApp();

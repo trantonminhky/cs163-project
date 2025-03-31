@@ -163,7 +163,7 @@ void GraphApp::Update()
     if (currentState == KRUSKAL)
     {
         kruskalTimer += GetFrameTime();
-        if (kruskalTimer >= 1.0f) // Changed from 0.5f to 1.0f to slow down the steps
+        if (kruskalTimer >= 1.0f)
         {
             kruskalTimer = 0.0f;
             RunKruskalStepByStep();
@@ -199,7 +199,7 @@ void GraphApp::Update()
     const float k = 15000.0f;
     const float k_ui = 20000.0f;
     const float damping = 0.3f;
-    std::vector<Vector2> forces(vertices.size(), {0, 0});
+    vector<Vector2> forces(vertices.size(), {0, 0}); // Removed std::
 
     for (size_t i = 0; i < vertices.size(); i++)
     {
@@ -303,7 +303,7 @@ void GraphApp::GenerateRandomGraph()
         vertices.push_back({pos, i, false, 1.0f, 0.0f, pos});
     }
 
-    std::vector<bool> visited(numVertices, false);
+    vector<bool> visited(numVertices, false); // Removed std::
     visited[0] = true;
     int connectedCount = 1;
 
@@ -362,7 +362,7 @@ bool GraphApp::WouldCollide(int excludeIndex, Vector2 newPos)
         Vector2 start = vertices[e.from].position;
         Vector2 end = vertices[e.to].position;
         Vector2 midPoint = {(start.x + end.x) / 2, (start.y + end.y) / 2};
-        std::string weightStr = std::to_string(e.weight);
+        string weightStr = to_string(e.weight); // Removed std::
         int textWidth = MeasureText(weightStr.c_str(), fontSize);
         float textHeight = fontSize;
 
@@ -445,10 +445,10 @@ void GraphApp::ProcessInsert()
     undoStack.push_back({vertices, edges});
     redoStack.clear();
 
-    std::string input(inputText);
+    string input(inputText); // Removed std::
     int from = -1, to = -1, weight = -1;
     int numbersFound = 0;
-    std::string currentNumber = "";
+    string currentNumber = ""; // Removed std::
 
     for (char c : input)
     {
@@ -535,10 +535,10 @@ void GraphApp::ProcessDelete()
     undoStack.push_back({vertices, edges});
     redoStack.clear();
 
-    std::string input(inputText);
+    string input(inputText); // Removed std::
     int num1 = -1, num2 = -1;
     int numbersFound = 0;
-    std::string currentNumber = "";
+    string currentNumber = ""; // Removed std::
 
     for (char c : input)
     {
@@ -694,8 +694,8 @@ void GraphApp::RunKruskalStepByStep()
         parent.resize(vertices.size());
         for (size_t i = 0; i < vertices.size(); i++)
             MakeSet(i);
-        std::sort(edges.begin(), edges.end(), [](const Edge &a, const Edge &b)
-                  { return a.weight < b.weight; });
+        sort(edges.begin(), edges.end(), [](const Edge &a, const Edge &b) // Removed std::
+             { return a.weight < b.weight; });
     }
 
     if (kruskalStep < static_cast<int>(edges.size()))
@@ -759,7 +759,7 @@ void GraphApp::Draw()
     if (showTable)
     {
         DrawRectangle(screenWidth - 200, 90, 180, 40, LIGHTGRAY);
-        std::string totalText = "Total weight: " + std::to_string(totalWeight);
+        string totalText = "Total weight: " + to_string(totalWeight); // Removed std::
         DrawText(totalText.c_str(), screenWidth - 190, 100, 20, BLACK);
     }
 
@@ -772,8 +772,8 @@ void GraphApp::Draw()
 
         if (e.highlighted)
         {
-            lineColor = RED; // Changed from GREEN to RED
-            textColor = RED; // Changed from GREEN to RED
+            lineColor = RED;
+            textColor = RED;
         }
         else if (e.blurred)
         {
@@ -783,7 +783,7 @@ void GraphApp::Draw()
 
         DrawLineV(start, end, lineColor);
         Vector2 midPoint = {(start.x + end.x) / 2, (start.y + end.y) / 2};
-        std::string weightStr = std::to_string(e.weight);
+        string weightStr = to_string(e.weight); // Removed std::
         int fontSize = 20;
         int textWidth = MeasureText(weightStr.c_str(), fontSize);
         int textX = midPoint.x - textWidth / 2;
@@ -791,7 +791,7 @@ void GraphApp::Draw()
 
         for (size_t i = 0; i < weightStr.length(); i++)
         {
-            std::string digit = weightStr.substr(i, 1);
+            string digit = weightStr.substr(i, 1); // Removed std::
             int digitWidth = MeasureText(digit.c_str(), fontSize);
             DrawText(digit.c_str(), textX, textY, fontSize, textColor);
             textX += digitWidth + 2;
@@ -802,7 +802,7 @@ void GraphApp::Draw()
     {
         Color fadedColor = {BLUE.r, BLUE.g, BLUE.b, static_cast<unsigned char>(v.alpha * 255)};
         DrawCircleV(v.position, 30 * v.scale, fadedColor);
-        std::string idStr = std::to_string(v.id);
+        string idStr = to_string(v.id); 
         int numDigits = idStr.length();
         int fontSize = (numDigits > 3) ? 60 / numDigits : 20;
         fontSize = (fontSize < 10) ? 10 : fontSize;
