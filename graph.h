@@ -5,7 +5,9 @@
 #include <vector>
 #include <string>
 #include "tinyfiledialogs.h"
-// Vertex structure
+
+using namespace std;
+
 struct Vertex
 {
     Vector2 position;
@@ -16,7 +18,6 @@ struct Vertex
     Vector2 targetPos;
 };
 
-// Edge structure
 struct Edge
 {
     int from;
@@ -26,18 +27,17 @@ struct Edge
     bool blurred;
 };
 
-// Graph state for undo/redo
 struct GraphState
 {
-    std::vector<Vertex> vertices;
-    std::vector<Edge> edges;
+    vector<Vertex> vertices;
+    vector<Edge> edges;
 };
 
 class GraphApp
 {
 private:
-    std::vector<Vertex> vertices;
-    std::vector<Edge> edges;
+    vector<Vertex> vertices;
+    vector<Edge> edges;
     char inputText[32];
     bool showInputBox;
     int screenWidth;
@@ -54,16 +54,16 @@ private:
     };
     State currentState;
     int draggedVertex;
-    std::string searchResult;
+    string searchResult;
     bool showSearchMessage;
     float kruskalTimer;
     int kruskalStep;
-    std::vector<Edge> mstEdges;
+    vector<Edge> mstEdges;
     bool showTable;
     int totalWeight;
-    std::vector<GraphState> undoStack;
-    std::vector<GraphState> redoStack;
-    std::vector<int> parent;
+    vector<GraphState> undoStack;
+    vector<GraphState> redoStack;
+    vector<int> parent;
 
 public:
     GraphApp();
