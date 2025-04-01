@@ -4,6 +4,7 @@
 #include <raymath.h>
 #include <cstring>
 #include <algorithm>
+#include <fstream>
 
 GraphApp::GraphApp()
 {
@@ -73,6 +74,7 @@ void GraphApp::Update()
 
     if (currentState == NORMAL || currentState == DRAGGING || showInputBox || currentState == KRUSKAL || currentState == INSERT || currentState == DELETE)
     {
+        using namespace std; // Added for this block
         if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 120), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             if (!redoStack.empty())
@@ -94,6 +96,12 @@ void GraphApp::Update()
                 edges = prevState.edges;
                 undoStack.pop_back();
             }
+        }
+        else if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 160), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            ResetGraphState();
+            ProcessFileInput();
+            currentState = NORMAL;
         }
         else if (CheckCollisionPointRec(mousePos, {200, static_cast<float>(screenHeight - 80), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
@@ -199,7 +207,7 @@ void GraphApp::Update()
     const float k = 15000.0f;
     const float k_ui = 20000.0f;
     const float damping = 0.3f;
-    vector<Vector2> forces(vertices.size(), {0, 0}); // Removed std::
+    vector<Vector2> forces(vertices.size(), {0, 0});
 
     for (size_t i = 0; i < vertices.size(); i++)
     {
@@ -287,6 +295,104 @@ void GraphApp::Update()
     }
 }
 
+void GraphApp::Draw()
+{
+    BeginDrawing();
+    ClearBackground(RAYWHITE);
+
+    DrawText("MINIMUM SPANNING TREE", 10, 10, 30, BLACK);
+    DrawRectangle(20, screenHeight - 120, 140, 30, GRAY);
+    DrawText("Redo", 55, screenHeight - 115, 20, WHITE);
+    DrawRectangle(20, screenHeight - 80, 140, 30, GRAY);
+    DrawText("Undo", 55, screenHeight - 75, 20, WHITE);
+    using namespace std;
+    DrawRectangle(20, screenHeight - 160, 140, 30, GRAY);
+    DrawText("Input File", 45, screenHeight - 155, 20, WHITE);
+
+    DrawRectangle(200, screenHeight - 80, 140, 30, GRAY);
+    DrawText("Delete All", 225, screenHeight - 75, 20, WHITE);
+    DrawRectangle(20, screenHeight - 40, 140, 30, GRAY);
+    if (currentState == RANDOM)
+        DrawRectangleLinesEx({20, static_cast<float>(screenHeight - 40), 140, 30}, 3, YELLOW);
+    DrawText("Random", 35, screenHeight - 35, 20, WHITE);
+    DrawRectangle(500, screenHeight - 40, 220, 30, GRAY);
+    if (currentState == KRUSKAL)
+        DrawRectangleLinesEx({500, static_cast<float>(screenHeight - 40), 220, 30}, 3, YELLOW);
+    DrawText("Kruskal's Algorithm", 515, screenHeight - 35, 20, WHITE);
+    DrawRectangle(350, screenHeight - 40, 140, 30, GRAY);
+    if (currentState == INSERT)
+        DrawRectangleLinesEx({350, static_cast<float>(screenHeight - 40), 140, 30}, 3, YELLOW);
+    DrawText("Insert", 385, screenHeight - 35, 20, WHITE);
+    DrawRectangle(200, screenHeight - 40, 140, 30, GRAY);
+    if (currentState == DELETE)
+        DrawRectangleLinesEx({200, static_cast<float>(screenHeight - 40), 140, 30}, 3, YELLOW);
+    DrawText("Delete", 235, screenHeight - 35, 20, WHITE);
+
+    if (showInputBox)
+    {
+        DrawRectangle(1000, screenHeight - 40, 150, 30, LIGHTGRAY);
+        DrawText(inputText, 1005, screenHeight - 35, 20, BLACK);
+    }
+
+    if (showTable)
+    {
+        DrawRectangle(screenWidth - 200, 90, 180, 40, LIGHTGRAY);
+        string totalText = "Total weight: " + to_string(totalWeight);
+        DrawText(totalText.c_str(), screenWidth - 190, 100, 20, BLACK);
+    }
+
+    for (const Edge &e : edges)
+    {
+        Vector2 start = vertices[e.from].position;
+        Vector2 end = vertices[e.to].position;
+        Color lineColor = BLACK;
+        Color textColor = BLACK;
+
+        if (e.highlighted)
+        {
+            lineColor = RED;
+            textColor = RED;
+        }
+        else if (e.blurred)
+        {
+            lineColor = {128, 128, 128, 100};
+            textColor = {128, 128, 128, 100};
+        }
+
+        DrawLineV(start, end, lineColor);
+        Vector2 midPoint = {(start.x + end.x) / 2, (start.y + end.y) / 2};
+        string weightStr = to_string(e.weight);
+        int fontSize = 20;
+        int textWidth = MeasureText(weightStr.c_str(), fontSize);
+        int textX = midPoint.x - textWidth / 2;
+        int textY = midPoint.y - 30;
+
+        for (size_t i = 0; i < weightStr.length(); i++)
+        {
+            string digit = weightStr.substr(i, 1);
+            int digitWidth = MeasureText(digit.c_str(), fontSize);
+            DrawText(digit.c_str(), textX, textY, fontSize, textColor);
+            textX += digitWidth + 2;
+        }
+    }
+
+    for (const Vertex &v : vertices)
+    {
+        Color fadedColor = {BLUE.r, BLUE.g, BLUE.b, static_cast<unsigned char>(v.alpha * 255)};
+        DrawCircleV(v.position, 30 * v.scale, fadedColor);
+        string idStr = to_string(v.id);
+        int numDigits = idStr.length();
+        int fontSize = (numDigits > 3) ? 60 / numDigits : 20;
+        fontSize = (fontSize < 10) ? 10 : fontSize;
+        int textWidth = MeasureText(idStr.c_str(), fontSize);
+        int textX = v.position.x - textWidth / 2;
+        int textY = v.position.y - fontSize / 2;
+        DrawText(idStr.c_str(), textX, textY, fontSize, WHITE);
+    }
+
+    EndDrawing();
+}
+
 void GraphApp::HandleInitialize()
 {
     vertices.clear();
@@ -303,7 +409,7 @@ void GraphApp::GenerateRandomGraph()
         vertices.push_back({pos, i, false, 1.0f, 0.0f, pos});
     }
 
-    vector<bool> visited(numVertices, false); // Removed std::
+    vector<bool> visited(numVertices, false);
     visited[0] = true;
     int connectedCount = 1;
 
@@ -362,7 +468,7 @@ bool GraphApp::WouldCollide(int excludeIndex, Vector2 newPos)
         Vector2 start = vertices[e.from].position;
         Vector2 end = vertices[e.to].position;
         Vector2 midPoint = {(start.x + end.x) / 2, (start.y + end.y) / 2};
-        string weightStr = to_string(e.weight); // Removed std::
+        string weightStr = to_string(e.weight);
         int textWidth = MeasureText(weightStr.c_str(), fontSize);
         float textHeight = fontSize;
 
@@ -445,10 +551,10 @@ void GraphApp::ProcessInsert()
     undoStack.push_back({vertices, edges});
     redoStack.clear();
 
-    string input(inputText); // Removed std::
+    string input(inputText);
     int from = -1, to = -1, weight = -1;
     int numbersFound = 0;
-    string currentNumber = ""; // Removed std::
+    string currentNumber = "";
 
     for (char c : input)
     {
@@ -535,10 +641,10 @@ void GraphApp::ProcessDelete()
     undoStack.push_back({vertices, edges});
     redoStack.clear();
 
-    string input(inputText); // Removed std::
+    string input(inputText);
     int num1 = -1, num2 = -1;
     int numbersFound = 0;
-    string currentNumber = ""; // Removed std::
+    string currentNumber = "";
 
     for (char c : input)
     {
@@ -694,7 +800,7 @@ void GraphApp::RunKruskalStepByStep()
         parent.resize(vertices.size());
         for (size_t i = 0; i < vertices.size(); i++)
             MakeSet(i);
-        sort(edges.begin(), edges.end(), [](const Edge &a, const Edge &b) // Removed std::
+        sort(edges.begin(), edges.end(), [](const Edge &a, const Edge &b)
              { return a.weight < b.weight; });
     }
 
@@ -721,96 +827,75 @@ void GraphApp::RunKruskalStepByStep()
     }
 }
 
-void GraphApp::Draw()
+void GraphApp::ProcessFileInput()
 {
-    BeginDrawing();
-    ClearBackground(RAYWHITE);
+    using namespace std;
+#include <fstream>
 
-    DrawText("MINIMUM SPANNING TREE", 10, 10, 30, BLACK);
-    DrawRectangle(20, screenHeight - 120, 140, 30, GRAY);
-    DrawText("Redo", 55, screenHeight - 115, 20, WHITE);
-    DrawRectangle(20, screenHeight - 80, 140, 30, GRAY);
-    DrawText("Undo", 55, screenHeight - 75, 20, WHITE);
-    DrawRectangle(200, screenHeight - 80, 140, 30, GRAY);
-    DrawText("Delete All", 225, screenHeight - 75, 20, WHITE);
-    DrawRectangle(20, screenHeight - 40, 140, 30, GRAY);
-    if (currentState == RANDOM)
-        DrawRectangleLinesEx({20, static_cast<float>(screenHeight - 40), 140, 30}, 3, YELLOW);
-    DrawText("Random", 35, screenHeight - 35, 20, WHITE);
-    DrawRectangle(500, screenHeight - 40, 220, 30, GRAY);
-    if (currentState == KRUSKAL)
-        DrawRectangleLinesEx({500, static_cast<float>(screenHeight - 40), 220, 30}, 3, YELLOW);
-    DrawText("Kruskal's Algorithm", 515, screenHeight - 35, 20, WHITE);
-    DrawRectangle(350, screenHeight - 40, 140, 30, GRAY);
-    if (currentState == INSERT)
-        DrawRectangleLinesEx({350, static_cast<float>(screenHeight - 40), 140, 30}, 3, YELLOW);
-    DrawText("Insert", 385, screenHeight - 35, 20, WHITE);
-    DrawRectangle(200, screenHeight - 40, 140, 30, GRAY);
-    if (currentState == DELETE)
-        DrawRectangleLinesEx({200, static_cast<float>(screenHeight - 40), 140, 30}, 3, YELLOW);
-    DrawText("Delete", 235, screenHeight - 35, 20, WHITE);
+    const char *filePath = tinyfd_openFileDialog(
+        "Select Graph Data File",
+        "",
+        0,
+        NULL,
+        NULL, 1);
 
-    if (showInputBox)
+    if (!filePath)
+        return;
+
+    ifstream file(filePath);
+    if (!file.is_open())
+        return;
+
+    undoStack.push_back({vertices, edges});
+    redoStack.clear();
+
+    string line;
+    while (getline(file, line))
     {
-        DrawRectangle(1000, screenHeight - 40, 150, 30, LIGHTGRAY);
-        DrawText(inputText, 1005, screenHeight - 35, 20, BLACK);
-    }
+        int from = -1, to = -1, weight = -1;
+        int numbersFound = 0;
+        string currentNumber;
 
-    if (showTable)
-    {
-        DrawRectangle(screenWidth - 200, 90, 180, 40, LIGHTGRAY);
-        string totalText = "Total weight: " + to_string(totalWeight); // Removed std::
-        DrawText(totalText.c_str(), screenWidth - 190, 100, 20, BLACK);
-    }
-
-    for (const Edge &e : edges)
-    {
-        Vector2 start = vertices[e.from].position;
-        Vector2 end = vertices[e.to].position;
-        Color lineColor = BLACK;
-        Color textColor = BLACK;
-
-        if (e.highlighted)
+        for (char c : line)
         {
-            lineColor = RED;
-            textColor = RED;
+            if (c == ' ')
+            {
+                if (!currentNumber.empty())
+                {
+                    if (numbersFound == 0)
+                        from = atoi(currentNumber.c_str());
+                    else if (numbersFound == 1)
+                        to = atoi(currentNumber.c_str());
+                    else if (numbersFound == 2)
+                        weight = atoi(currentNumber.c_str());
+                    numbersFound++;
+                    currentNumber.clear();
+                }
+            }
+            else if (c >= '0' && c <= '9')
+            {
+                currentNumber += c;
+            }
         }
-        else if (e.blurred)
+        if (!currentNumber.empty() && numbersFound < 3)
         {
-            lineColor = {128, 128, 128, 100};
-            textColor = {128, 128, 128, 100};
+            if (numbersFound == 0)
+                from = atoi(currentNumber.c_str());
+            else if (numbersFound == 1)
+                to = atoi(currentNumber.c_str());
+            else if (numbersFound == 2)
+                weight = atoi(currentNumber.c_str());
+            numbersFound++;
         }
 
-        DrawLineV(start, end, lineColor);
-        Vector2 midPoint = {(start.x + end.x) / 2, (start.y + end.y) / 2};
-        string weightStr = to_string(e.weight); // Removed std::
-        int fontSize = 20;
-        int textWidth = MeasureText(weightStr.c_str(), fontSize);
-        int textX = midPoint.x - textWidth / 2;
-        int textY = midPoint.y - 30;
-
-        for (size_t i = 0; i < weightStr.length(); i++)
+        if (numbersFound == 3 && from != to && weight > 0)
         {
-            string digit = weightStr.substr(i, 1); // Removed std::
-            int digitWidth = MeasureText(digit.c_str(), fontSize);
-            DrawText(digit.c_str(), textX, textY, fontSize, textColor);
-            textX += digitWidth + 2;
+            snprintf(inputText, sizeof(inputText), "%d %d %d", from, to, weight);
+            currentState = INSERT;
+            ProcessInsert();
         }
     }
 
-    for (const Vertex &v : vertices)
-    {
-        Color fadedColor = {BLUE.r, BLUE.g, BLUE.b, static_cast<unsigned char>(v.alpha * 255)};
-        DrawCircleV(v.position, 30 * v.scale, fadedColor);
-        string idStr = to_string(v.id); 
-        int numDigits = idStr.length();
-        int fontSize = (numDigits > 3) ? 60 / numDigits : 20;
-        fontSize = (fontSize < 10) ? 10 : fontSize;
-        int textWidth = MeasureText(idStr.c_str(), fontSize);
-        int textX = v.position.x - textWidth / 2;
-        int textY = v.position.y - fontSize / 2;
-        DrawText(idStr.c_str(), textX, textY, fontSize, WHITE);
-    }
-
-    EndDrawing();
+    file.close();
+    currentState = NORMAL;
 }
