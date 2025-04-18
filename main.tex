@@ -190,6 +190,9 @@ The above implementation includes the node's data and animation coordinates. Alt
 \begin{lstlisting}[language=c++]
 	class LinkedList {
 	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
+
 		NodeL* insert(NodeL* node, int value, std::vector<NodeL*>& path);
 		// Recursively adds a node at the end, tracking the path for animation (O(n)).
 
@@ -234,6 +237,9 @@ This implementation handles the data of the table itself. In order to efficientl
 
 	class UI {
 	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
+
 		void update();
 		// Manages animation states (INDEX, EXISTING_NODES, NEW_NODE) with a timer, processes user input, and queues file-loaded values.
 
@@ -266,6 +272,9 @@ As such, the implementation of the class \lstinline|GraphApp| is as follows:
 \begin{lstlisting}[language=c++]
 	class GraphApp {
 	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
+
 		void Update();
 		// Applies a force-directed layout (repulsive forces between vertices, UI avoidance) to position nodes dynamically (O(n^2)).
 
@@ -299,26 +308,32 @@ The involved files are \lstinline|include/AVL.h| and \lstinline|/src/AVL.cpp|. I
 \end{lstlisting}
 As usual, the class implementation is as follows:
 \begin{lstlisting}[language=c++]
-	void insert(int key);
-	// Recursively inserts a node with key, updating the path for animation. Balances the tree using AVL rotations if the balance factor (getHeight(left) - getHeight(right)) exceeds 1 or -1.
+	class AVLTree {
+	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
 
-	void deleteNode(int key);
-	// Recursively finds and removes the node, replacing it with the minimum of the right subtree if it has two children, then rebalances.
+		void insert(int key);
+		// Recursively inserts a node with key, updating the path for animation. Balances the tree using AVL rotations if the balance factor (getHeight(left) - getHeight(right)) exceeds 1 or -1.
 
-	void search(int key, std::vector<Node*>& searchPath);
-	// Traverses the tree, adding nodes to searchPath until key is found or traversal ends.
+		void deleteNode(int key);
+		// Recursively finds and removes the node, replacing it with the minimum of the right subtree if it has two children, then rebalances.
 
-	Node* undo(std::vector<Node*>& affectedPath);
-	// Pops a state from history, deep-copies the current state, and restores the previous state.
+		void search(int key, std::vector<Node*>& searchPath);
+		// Traverses the tree, adding nodes to searchPath until key is found or traversal ends.
 
-	Node* redo(std::vector<Node*>& affectedPath);
-	// Pops a state from redoStack, deep-copies the current state, and restores the next state.
+		Node* undo(std::vector<Node*>& affectedPath);
+		// Pops a state from history, deep-copies the current state, and restores the previous state.
 
-	void updateAnimation(float deltaTime);
-	// Uses linear interpolation (x += dx * deltaTime * 2.0f) to move nodes from current (x, y) to target positions (targetX, targetY).
+		Node* redo(std::vector<Node*>& affectedPath);
+		// Pops a state from redoStack, deep-copies the current state, and restores the next state.
 
-	void draw(const std::vector<Node*>& highlightPath);
-	// Recursively renders nodes (circles) and edges (lines) with Raylib, highlighting nodes in highlightPath.
+		void updateAnimation(float deltaTime);
+		// Uses linear interpolation (x += dx * deltaTime * 2.0f) to move nodes from current (x, y) to target positions (targetX, targetY).
+
+		void draw(const std::vector<Node*>& highlightPath);
+		// Recursively renders nodes (circles) and edges (lines) with raylib, highlighting nodes in highlightPath.
+	}
 \end{lstlisting}
 
 \subsection{Usage}
