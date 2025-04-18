@@ -8,7 +8,9 @@
 
 Node::Node(int value) : key(value), height(1), left(nullptr), right(nullptr), x(0), y(0), targetX(0), targetY(0), isDying(false) {}
 
-AVLTree::AVLTree() : root(nullptr) {}
+AVLTree::AVLTree() : root(nullptr), instantMode(false) {
+    instantBtn = { 900, 880, 100, 40 }; // Positioned to avoid overlap
+}
 
 AVLTree::~AVLTree() {
     deleteTree(root);
@@ -287,10 +289,16 @@ void AVLTree::updateAnimation(float deltaTime) {
     }
 
     for (Node* node : nodes) {
-        float dx = node->targetX - node->x;
-        float dy = node->targetY - node->y;
-        node->x += dx * deltaTime * 2.0f;
-        node->y += dy * deltaTime * 2.0f;
+        if (instantMode) {
+            node->x = node->targetX; // Instant position update
+            node->y = node->targetY;
+        }
+        else {
+            float dx = node->targetX - node->x;
+            float dy = node->targetY - node->y;
+            node->x += dx * deltaTime * 2.0f;
+            node->y += dy * deltaTime * 2.0f;
+        }
     }
 }
 
@@ -378,13 +386,27 @@ void AVLTree::LoadFromFile(std::string& searchResult) {
 
     int value;
     int count = 0;
-    while (fscanf_s(file, "%d", &value) == 1) {
-        insert(value);
-        count++;
+    if (instantMode) {
+        while (fscanf_s(file, "%d", &value) == 1) {
+            insert(value);
+            calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1); // Update positions per insert
+            updateAnimation(0.0f); // Force instant position update
+            count++;
+        }
+        searchResult = "Instantly loaded " + std::to_string(count) + " values from " + std::string(filePath);
+    }
+    else {
+        std::vector<Node*> path;
+        while (fscanf_s(file, "%d", &value) == 1) {
+            path.clear();
+            root = insert(root, value, path);
+            calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1);
+            count++;
+        }
+        searchResult = "Loaded " + std::to_string(count) + " values from " + std::string(filePath);
     }
 
     fclose(file);
-    searchResult = "Loaded " + std::to_string(count) + " values from " + std::string(filePath);
 }
 
 void runAVL() {
@@ -413,13 +435,13 @@ void runAVL() {
     Rectangle redoButton = { 680, screenHeight - 120, 100, 40 };
     Rectangle FileButton = { 790, screenHeight - 120, 100, 40 };
     Rectangle inputBox = { 20, screenHeight - 60, 100, 40 };
-
     Rectangle returnButton = { screenWidth - 120, 10, 100, 40 };
 
     Color TEAL = { 0, 128, 128, 255 };
     Color Mediumblue = { 0, 102, 204, 255 };
+    Color instantColor = { 255, 105, 180, 255 }; // Pink for instant mode
 
-    bool shouldReturn = false; // Flag to exit loop
+    bool shouldReturn = false;
 
     while (!WindowShouldClose() && !shouldReturn) {
         float deltaTime = GetFrameTime();
@@ -444,6 +466,7 @@ void runAVL() {
         bool undoHover = CheckCollisionPointRec(GetMousePosition(), undoButton);
         bool redoHover = CheckCollisionPointRec(GetMousePosition(), redoButton);
         bool FileHover = CheckCollisionPointRec(GetMousePosition(), FileButton);
+        bool instantHover = CheckCollisionPointRec(GetMousePosition(), tree.instantBtn);
         bool returnHover = CheckCollisionPointRec(GetMousePosition(), returnButton);
 
         bool insertClicked = isButtonClicked(insertButton);
@@ -454,7 +477,21 @@ void runAVL() {
         bool undoClicked = isButtonClicked(undoButton);
         bool redoClicked = isButtonClicked(redoButton);
         bool FileClicked = isButtonClicked(FileButton);
+        bool instantClicked = isButtonClicked(tree.instantBtn);
         bool returnClicked = isButtonClicked(returnButton);
+
+        if (instantClicked) {
+            tree.instantMode = !tree.instantMode;
+            searchResult = tree.instantMode ? "Instant Mode ON" : "Step-by-Step Mode ON";
+            if (tree.instantMode) {
+                searching = false;
+                inserting = false;
+                searchPath.clear();
+                insertPath.clear();
+                searchTimer = 0.0f;
+                searchIndex = 0;
+            }
+        }
 
         if (insertClicked && inputIndex > 0) {
             int value = atoi(inputBuffer);
@@ -462,10 +499,18 @@ void runAVL() {
             tree.insert(value);
             inputIndex = 0;
             inputBuffer[0] = '\0';
-            searchPath = insertPath;
-            searchIndex = 0;
-            searchTimer = 0.0f;
-            inserting = true;
+            if (!tree.instantMode) {
+                tree.search(value, insertPath); // Update insertPath for animation
+                searchPath = insertPath;
+                searchIndex = 0;
+                searchTimer = 0.0f;
+                inserting = true;
+            }
+            else {
+                searchPath.clear();
+                inserting = false;
+                tree.updateAnimation(0.0f); // Force instant position update
+            }
             searchResult = "";
         }
         if (deleteClicked && inputIndex > 0) {
@@ -475,17 +520,34 @@ void runAVL() {
             inputBuffer[0] = '\0';
             searching = false;
             inserting = false;
+            searchPath.clear();
+            insertPath.clear();
             searchResult = "";
+            if (tree.instantMode) {
+                tree.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (searchClicked && inputIndex > 0) {
             lastSearchValue = atoi(inputBuffer);
             tree.search(lastSearchValue, searchPath);
             inputIndex = 0;
             inputBuffer[0] = '\0';
-            searchIndex = 0;
-            searchTimer = 0.0f;
-            searching = true;
-            searchResult = "Searching for " + std::to_string(lastSearchValue) + "...";
+            if (!tree.instantMode) {
+                searchIndex = 0;
+                searchTimer = 0.0f;
+                searching = true;
+                searchResult = "Searching for " + std::to_string(lastSearchValue) + "...";
+            }
+            else {
+                if (!searchPath.empty() && searchPath.back()->key == lastSearchValue) {
+                    searchResult = "Node " + std::to_string(lastSearchValue) + " is found";
+                }
+                else {
+                    searchResult = "Node " + std::to_string(lastSearchValue) + " is not found";
+                }
+                searching = false;
+                searchPath.clear();
+            }
         }
         if (clearClicked) {
             tree.clear();
@@ -505,6 +567,9 @@ void runAVL() {
             searching = false;
             inserting = false;
             searchResult = "";
+            if (tree.instantMode) {
+                tree.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (undoClicked) {
             Node* affectedNode = tree.undo(affectedPath);
@@ -513,6 +578,9 @@ void runAVL() {
             searchPath.clear();
             insertPath.clear();
             searchResult = "";
+            if (tree.instantMode && affectedNode) {
+                tree.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (redoClicked) {
             Node* affectedNode = tree.redo(affectedPath);
@@ -521,6 +589,9 @@ void runAVL() {
             searchPath.clear();
             insertPath.clear();
             searchResult = "";
+            if (tree.instantMode && affectedNode) {
+                tree.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (FileClicked) {
             tree.LoadFromFile(searchResult);
@@ -529,10 +600,10 @@ void runAVL() {
             searching = false;
         }
         if (returnClicked || IsKeyPressed(KEY_BACKSPACE)) {
-            shouldReturn = true; // Exit loop to return to menu
+            shouldReturn = true;
         }
 
-        if ((searching || inserting) && !searchPath.empty()) {
+        if ((searching || inserting) && !searchPath.empty() && !tree.instantMode) {
             searchTimer += deltaTime;
             if (searchTimer >= 0.5f) {
                 searchIndex++;
@@ -559,10 +630,8 @@ void runAVL() {
         ClearBackground(WHITE);
         DrawText("AVL Visualise", screenWidth / 2 - MeasureText("AVL Visualise", 100) / 2, screenHeight / 2 - 50, 100, Fade(GRAY, 0.2f));
 
-        
-
         std::vector<Node*> currentHighlight;
-        if (searching || inserting) {
+        if ((searching || inserting) && !tree.instantMode) {
             if (searchIndex < static_cast<int>(searchPath.size())) {
                 currentHighlight.push_back(searchPath[searchIndex]);
             }
@@ -582,6 +651,7 @@ void runAVL() {
         drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
         drawButton(FileButton, "File", Mediumblue, FileHover, FileClicked);
+        drawButton(tree.instantBtn, tree.instantMode ? "Instant" : "Step", instantColor, instantHover, instantClicked);
         drawButton(returnButton, "Return", YELLOW, returnHover, returnClicked);
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
