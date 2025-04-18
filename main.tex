@@ -154,23 +154,23 @@ We chose these methods of data storage with rationales that this should boost ef
 We outline the overall project's directory as follows:
 \begin{lstlisting}
 	DSA_Visualizer/
-	|-- main.cpp
-	|-- include/
-	|   |-- AVL.h
-	|   |-- HashTable.h
-	|   |-- Graph.h
-	|   |-- LinkedList.h
-	|   |-- Common.h
-	|-- src/
-	|   |-- AVL.cpp
-	|   |-- HashTable.cpp
-	|   |-- Graph.cpp
-	|   |-- LinkedList.cpp
-	|   |-- Menu.cpp
-	|   |-- Common.cpp
-	|-- external/
-		|-- raylib.h
-		|-- tinyfiledialogs.h
+	|-- main.cpp 	<!-- Entry point and menu -->
+	|-- include/ 	<!-- Header files -->
+	|		|-- AVL.h 					<!-- AVL Tree definitions -->
+	|		|-- HashTable.h			<!-- Hash Table definitions -->
+	|		|-- Graph.h					<!-- Graph definitions -->
+	|		|-- LinkedList.h 		<!-- Linked List definitions -->
+	|		|-- Common.h 				<!-- Shared utilities -->
+	|--	src/			<!-- Source files -->
+	|		|-- AVL.cpp					<!-- AVL Tree implementation -->
+	|		|-- HashTable.cpp		<!-- Hash Table implementation -->
+	|		|-- Graph.cpp				<!-- Graph implementation -->
+	|		|-- LinkedList.cpp	<!-- Linked List implementation -->
+	|		|-- Menu.cpp				<!-- Menu implementation -->
+	|		|-- Common.cpp			<!-- Shared utilities implementation -->
+	|-- external/	<!-- External libraries -->
+			|-- raylib.h
+			|-- tinyfiledialogs.h
 \end{lstlisting}
 In order to successfully compile and build these core files, auxiliary build files are also implemented on each member's end.
 
