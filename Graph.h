@@ -64,6 +64,8 @@ private:
     vector<GraphState> undoStack;
     vector<GraphState> redoStack;
     vector<int> parent;
+    bool instantMode; // For instant execution toggle
+    Rectangle instantBtn; // Instant mode button
 
     void HandleInitialize();
     void GenerateRandomGraph();
@@ -87,7 +89,7 @@ public:
     GraphApp();
     void Run();
     void Update();
-    void Draw(bool& shouldReturn); // Modified to handle return state
+    void Draw(bool& shouldReturn);
 };
 
 #endif

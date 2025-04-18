@@ -70,7 +70,7 @@ private:
     Rectangle inputBox = { 800, 10, 100, 40 };
 
     bool instantMode = false;
-    Rectangle instantBtn = { 560, 55, 100, 40 };
+    Rectangle instantBtn = { 670, 10, 100, 40 };
     Vector2 inputLabelPos = { 740, 20 };
 
     void drawTable() const;

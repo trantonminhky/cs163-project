@@ -44,6 +44,8 @@ public:
     void updateAnimation(float deltaTime);
     void draw(const std::vector<NodeL*>& highlightPath);
     void LoadFromFile(std::string& searchResult);
+    bool instantMode; // Added for instant execution toggle
+    Rectangle instantBtn; // Added for instant mode button
 };
 
 #endif

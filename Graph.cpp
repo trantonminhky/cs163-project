@@ -9,8 +9,8 @@
 
 GraphApp::GraphApp()
 {
-    screenWidth = 1400;  // Updated to match AVL/Linked List
-    screenHeight = 1000; // Updated to match AVL/Linked List
+    screenWidth = 1400;
+    screenHeight = 1000;
     srand(static_cast<unsigned>(time(nullptr)));
     inputText[0] = '\0';
     showInputBox = false;
@@ -22,6 +22,8 @@ GraphApp::GraphApp()
     kruskalStep = -1;
     showTable = false;
     totalWeight = 0;
+    instantMode = false;
+    instantBtn = { 710, static_cast<float>(screenHeight - 80), 140, 30 }; // Adjusted to bottom row
 }
 
 void GraphApp::Run()
@@ -40,9 +42,9 @@ void GraphApp::Update()
 
     for (Vertex& v : vertices)
     {
-        v.scale = Lerp(v.scale, 1.0f, 0.1f);
-        v.alpha = Lerp(v.alpha, 1.0f, 0.05f);
-        v.position = Vector2Lerp(v.position, v.targetPos, 0.1f);
+        v.scale = Lerp(v.scale, 1.0f, instantMode ? 1.0f : 0.1f);
+        v.alpha = Lerp(v.alpha, 1.0f, instantMode ? 1.0f : 0.05f);
+        v.position = Vector2Lerp(v.position, v.targetPos, instantMode ? 1.0f : 0.1f);
     }
 
     if (showInputBox)
@@ -73,7 +75,6 @@ void GraphApp::Update()
 
     if (currentState == NORMAL || currentState == DRAGGING || showInputBox || currentState == KRUSKAL || currentState == INSERT || currentState == DELETE)
     {
-        using namespace std;
         if (CheckCollisionPointRec(mousePos, { 20, static_cast<float>(screenHeight - 120), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             if (!redoStack.empty())
@@ -85,7 +86,7 @@ void GraphApp::Update()
                 redoStack.pop_back();
             }
         }
-        else if (CheckCollisionPointRec(mousePos, { 20, static_cast<float>(screenHeight - 80), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, { 170, static_cast<float>(screenHeight - 120), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             if (!undoStack.empty())
             {
@@ -96,20 +97,20 @@ void GraphApp::Update()
                 undoStack.pop_back();
             }
         }
-        else if (CheckCollisionPointRec(mousePos, { 20, static_cast<float>(screenHeight - 160), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, { 320, static_cast<float>(screenHeight - 120), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             ResetGraphState();
             ProcessFileInput();
             currentState = NORMAL;
         }
-        else if (CheckCollisionPointRec(mousePos, { 200, static_cast<float>(screenHeight - 80), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, { 470, static_cast<float>(screenHeight - 120), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             undoStack.push_back({ vertices, edges });
             redoStack.clear();
             vertices.clear();
             edges.clear();
         }
-        else if (CheckCollisionPointRec(mousePos, { 20, static_cast<float>(screenHeight - 40), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, { 20, static_cast<float>(screenHeight - 80), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             ResetGraphState();
             currentState = RANDOM;
@@ -118,7 +119,7 @@ void GraphApp::Update()
             ProcessInput();
             currentState = NORMAL;
         }
-        else if (CheckCollisionPointRec(mousePos, { 500, static_cast<float>(screenHeight - 40), 220, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, { 470, static_cast<float>(screenHeight - 80), 220, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             ResetGraphState();
             currentState = KRUSKAL;
@@ -126,9 +127,18 @@ void GraphApp::Update()
             kruskalStep = 0;
             mstEdges.clear();
             totalWeight = 0;
-            RunKruskalStepByStep();
+            if (instantMode) {
+                while (kruskalStep < static_cast<int>(edges.size())) {
+                    RunKruskalStepByStep();
+                }
+                currentState = NORMAL;
+                showTable = true;
+            }
+            else {
+                RunKruskalStepByStep();
+            }
         }
-        else if (CheckCollisionPointRec(mousePos, { 350, static_cast<float>(screenHeight - 40), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, { 320, static_cast<float>(screenHeight - 80), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             if (currentState == INSERT && showInputBox)
             {
@@ -144,7 +154,7 @@ void GraphApp::Update()
                 inputText[0] = '\0';
             }
         }
-        else if (CheckCollisionPointRec(mousePos, { 200, static_cast<float>(screenHeight - 40), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, { 170, static_cast<float>(screenHeight - 80), 140, 30 }) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             if (currentState == DELETE && showInputBox)
             {
@@ -160,6 +170,11 @@ void GraphApp::Update()
                 inputText[0] = '\0';
             }
         }
+        else if (CheckCollisionPointRec(mousePos, instantBtn) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        {
+            instantMode = !instantMode;
+            searchResult = instantMode ? "Instant Mode ON" : "Step-by-Step Mode ON";
+        }
         else if ((currentState == INSERT || currentState == DELETE) && showInputBox && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
         {
             showInputBox = false;
@@ -167,7 +182,7 @@ void GraphApp::Update()
         }
     }
 
-    if (currentState == KRUSKAL)
+    if (currentState == KRUSKAL && !instantMode)
     {
         kruskalTimer += GetFrameTime();
         if (kruskalTimer >= 1.0f)
@@ -229,16 +244,19 @@ void GraphApp::Update()
     for (size_t i = 0; i < vertices.size(); i++)
     {
         Rectangle uiElements[] = {
-            {20, static_cast<float>(screenHeight - 120), 140, 30},
-            {20, static_cast<float>(screenHeight - 80), 140, 30},
-            {200, static_cast<float>(screenHeight - 80), 140, 30},
-            {20, static_cast<float>(screenHeight - 40), 140, 30},
-            {500, static_cast<float>(screenHeight - 40), 220, 30},
-            {350, static_cast<float>(screenHeight - 40), 140, 30},
-            {200, static_cast<float>(screenHeight - 40), 140, 30},
-            {static_cast<float>(screenWidth - 200), 90, 180, 40},
-            {10, 10, static_cast<float>(MeasureText("MINIMUM SPANNING TREE", 30)), 30},
-            {static_cast<float>(screenWidth - 150), 20, 120, 40} // Adjusted return button position
+            {320, static_cast<float>(screenHeight - 120), 140, 30}, // File
+            {20, static_cast<float>(screenHeight - 120), 140, 30},  // Redo
+            {170, static_cast<float>(screenHeight - 120), 140, 30}, // Undo
+            {470, static_cast<float>(screenHeight - 120), 140, 30}, // Delete All
+            {20, static_cast<float>(screenHeight - 80), 140, 30},   // Random
+            {470, static_cast<float>(screenHeight - 80), 220, 30},  // Kruskal
+            {320, static_cast<float>(screenHeight - 80), 140, 30},  // Insert
+            {170, static_cast<float>(screenHeight - 80), 140, 30},  // Delete
+            {710, static_cast<float>(screenHeight - 80), 140, 30},  // Instant
+            {static_cast<float>(screenWidth - 200), 90, 180, 40},   // Table
+            {10, 10, static_cast<float>(MeasureText("MINIMUM SPANNING TREE", 30)), 30}, // Title
+            {static_cast<float>(screenWidth - 150), 20, 120, 40},   // Return
+            {870, static_cast<float>(screenHeight - 80), 150, 30}   // Input box
         };
 
         for (const Rectangle& ui : uiElements)
@@ -249,26 +267,6 @@ void GraphApp::Update()
             Vector2 closestPoint = {
                 Clamp(vertices[i].position.x, ui.x, ui.x + ui.width),
                 Clamp(vertices[i].position.y, ui.y, ui.y + ui.height) };
-            Vector2 diff = Vector2Subtract(vertices[i].position, closestPoint);
-            float distance = Vector2Length(diff);
-
-            if (distance < 60.0f)
-            {
-                if (distance < 1.0f)
-                    distance = 1.0f;
-                float forceMagnitude = k_ui / (distance * distance);
-                Vector2 force = (distance > 0.1f) ? Vector2Normalize(diff) : Vector2{ 1.0f, 0.0f };
-                force = Vector2Scale(force, forceMagnitude);
-                forces[i] = Vector2Add(forces[i], force);
-            }
-        }
-
-        if (showInputBox)
-        {
-            Rectangle inputBox = { 1000, static_cast<float>(screenHeight - 40), 150, 30 };
-            Vector2 closestPoint = {
-                Clamp(vertices[i].position.x, inputBox.x, inputBox.x + inputBox.width),
-                Clamp(vertices[i].position.y, inputBox.y, inputBox.y + inputBox.height) };
             Vector2 diff = Vector2Subtract(vertices[i].position, closestPoint);
             float distance = Vector2Length(diff);
 
@@ -304,15 +302,14 @@ void GraphApp::Draw(bool& shouldReturn)
     DrawText("MINIMUM SPANNING TREE", 10, 10, 30, BLACK);
     DrawText("Graph Visualise", screenWidth / 2 - MeasureText("Graph Visualise", 100) / 2, screenHeight / 2 - 50, 100, Fade(GRAY, 0.2f));
 
-    // Button definitions with hover/click detection
     Rectangle redoButton = { 20, static_cast<float>(screenHeight - 120), 140, 30 };
-    Rectangle undoButton = { 20, static_cast<float>(screenHeight - 80), 140, 30 };
-    Rectangle fileButton = { 20, static_cast<float>(screenHeight - 160), 140, 30 };
-    Rectangle deleteAllButton = { 200, static_cast<float>(screenHeight - 80), 140, 30 };
-    Rectangle randomButton = { 20, static_cast<float>(screenHeight - 40), 140, 30 };
-    Rectangle kruskalButton = { 500, static_cast<float>(screenHeight - 40), 220, 30 };
-    Rectangle insertButton = { 350, static_cast<float>(screenHeight - 40), 140, 30 };
-    Rectangle deleteButton = { 200, static_cast<float>(screenHeight - 40), 140, 30 };
+    Rectangle undoButton = { 170, static_cast<float>(screenHeight - 120), 140, 30 };
+    Rectangle fileButton = { 320, static_cast<float>(screenHeight - 120), 140, 30 };
+    Rectangle deleteAllButton = { 470, static_cast<float>(screenHeight - 120), 140, 30 };
+    Rectangle randomButton = { 20, static_cast<float>(screenHeight - 80), 140, 30 };
+    Rectangle kruskalButton = { 470, static_cast<float>(screenHeight - 80), 220, 30 };
+    Rectangle insertButton = { 320, static_cast<float>(screenHeight - 80), 140, 30 };
+    Rectangle deleteButton = { 170, static_cast<float>(screenHeight - 80), 140, 30 };
 
     bool redoHover = CheckCollisionPointRec(GetMousePosition(), redoButton);
     bool undoHover = CheckCollisionPointRec(GetMousePosition(), undoButton);
@@ -322,6 +319,7 @@ void GraphApp::Draw(bool& shouldReturn)
     bool kruskalHover = CheckCollisionPointRec(GetMousePosition(), kruskalButton);
     bool insertHover = CheckCollisionPointRec(GetMousePosition(), insertButton);
     bool deleteHover = CheckCollisionPointRec(GetMousePosition(), deleteButton);
+    bool instantHover = CheckCollisionPointRec(GetMousePosition(), instantBtn);
 
     bool redoClicked = isButtonClicked(redoButton);
     bool undoClicked = isButtonClicked(undoButton);
@@ -331,22 +329,24 @@ void GraphApp::Draw(bool& shouldReturn)
     bool kruskalClicked = isButtonClicked(kruskalButton);
     bool insertClicked = isButtonClicked(insertButton);
     bool deleteClicked = isButtonClicked(deleteButton);
+    bool instantClicked = isButtonClicked(instantBtn);
 
-    // Draw buttons with colors
     Color TEAL = { 0, 128, 128, 255 };
+    Color instantColor = instantMode ? PINK : LIME;
     drawButton(redoButton, "Redo", GRAY, redoHover, redoClicked);
     drawButton(undoButton, "Undo", DARKGRAY, undoHover, undoClicked);
-    drawButton(fileButton, "Input File", Color{ 0, 102, 204, 255 }, fileHover, fileClicked); // Mediumblue
+    drawButton(fileButton, "Input File", Color{ 0, 102, 204, 255 }, fileHover, fileClicked);
     drawButton(deleteAllButton, "Delete All", RED, deleteAllHover, deleteAllClicked);
     drawButton(randomButton, "Random", ORANGE, randomHover, randomClicked);
     drawButton(kruskalButton, "Kruskal's Algorithm", PURPLE, kruskalHover, kruskalClicked);
     drawButton(insertButton, "Insert", GREEN, insertHover, insertClicked);
     drawButton(deleteButton, "Delete", PINK, deleteHover, deleteClicked);
+    drawButton(instantBtn, instantMode ? "Instant" : "Step", instantColor, instantHover, instantClicked);
 
     if (showInputBox)
     {
-        DrawRectangle(1000, screenHeight - 40, 150, 30, LIGHTGRAY);
-        DrawText(inputText, 1005, screenHeight - 35, 20, BLACK);
+        DrawRectangle(870, screenHeight - 80, 150, 30, LIGHTGRAY);
+        DrawText(inputText, 875, screenHeight - 75, 20, BLACK);
     }
 
     if (showTable)
@@ -405,7 +405,6 @@ void GraphApp::Draw(bool& shouldReturn)
         DrawText(idStr.c_str(), textX, textY, fontSize, WHITE);
     }
 
-    // Draw "Return to Menu" button
     Rectangle returnButton = { screenWidth - 150, 20, 120, 40 };
     bool returnHover = CheckCollisionPointRec(GetMousePosition(), returnButton);
     bool returnClicked = isButtonClicked(returnButton);
@@ -476,14 +475,14 @@ Vector2 GraphApp::FindVacantPosition()
     const int maxAttempts = 50;
     do
     {
-        pos = { (float)(100 + rand() % (screenWidth - 200)), // Adjusted for 1400 width
-               (float)(100 + rand() % (screenHeight - 200)) }; // Adjusted for 1000 height
+        pos = { (float)(100 + rand() % (screenWidth - 200)),
+               (float)(100 + rand() % (screenHeight - 200)) };
         attempts++;
         if (attempts > maxAttempts)
         {
-            for (float x = 100; x < screenWidth - 100; x += 100) // Increased step for larger screen
+            for (float x = 100; x < screenWidth - 100; x += 100)
             {
-                for (float y = 100; y < screenHeight - 100; y += 100) // Increased step
+                for (float y = 100; y < screenHeight - 100; y += 100)
                 {
                     Vector2 testPos = { x, y };
                     if (!WouldCollide(-1, testPos))
@@ -492,7 +491,7 @@ Vector2 GraphApp::FindVacantPosition()
                     }
                 }
             }
-            return { screenWidth / 2.0f, screenHeight / 2.0f }; // Center fallback
+            return { screenWidth / 2.0f, screenHeight / 2.0f };
         }
     } while (WouldCollide(-1, pos));
     return pos;
@@ -633,14 +632,14 @@ void GraphApp::ProcessInsert()
             if (fromExists)
             {
                 existingIndex = GetVertexIndex(from);
-                vertices.push_back({ pos, to, false, 1.0f, 0.0f, pos });
+                vertices.push_back({ pos, to, false, 1.0f, instantMode ? 1.0f : 0.0f, pos });
                 newIndex = vertices.size() - 1;
                 edges.push_back({ existingIndex, newIndex, weight, false, false });
             }
             else
             {
                 existingIndex = GetVertexIndex(to);
-                vertices.push_back({ pos, from, false, 1.0f, 0.0f, pos });
+                vertices.push_back({ pos, from, false, 1.0f, instantMode ? 1.0f : 0.0f, pos });
                 newIndex = vertices.size() - 1;
                 edges.push_back({ newIndex, existingIndex, weight, false, false });
             }
@@ -648,11 +647,11 @@ void GraphApp::ProcessInsert()
         else if (!fromExists && !toExists)
         {
             Vector2 pos1 = FindVacantPosition();
-            vertices.push_back({ pos1, from, false, 1.0f, 0.0f, pos1 });
+            vertices.push_back({ pos1, from, false, 1.0f, instantMode ? 1.0f : 0.0f, pos1 });
             int fromIndex = vertices.size() - 1;
 
             Vector2 pos2 = FindVacantPosition();
-            vertices.push_back({ pos2, to, false, 1.0f, 0.0f, pos2 });
+            vertices.push_back({ pos2, to, false, 1.0f, instantMode ? 1.0f : 0.0f, pos2 });
             int toIndex = vertices.size() - 1;
 
             edges.push_back({ fromIndex, toIndex, weight, false, false });
@@ -800,7 +799,10 @@ void GraphApp::ResetGraphState()
     kruskalStep = -1;
 }
 
-void GraphApp::MakeSet(int v) { parent[v] = v; }
+void GraphApp::MakeSet(int v)
+{
+    parent[v] = v;
+}
 
 int GraphApp::Find(int v)
 {
@@ -873,50 +875,104 @@ void GraphApp::ProcessFileInput()
     redoStack.clear();
 
     string line;
-    while (getline(file, line))
-    {
-        int from = -1, to = -1, weight = -1;
-        int numbersFound = 0;
-        string currentNumber;
-
-        for (char c : line)
+    int count = 0;
+    if (instantMode) {
+        while (getline(file, line))
         {
-            if (c == ' ')
+            int from = -1, to = -1, weight = -1;
+            int numbersFound = 0;
+            string currentNumber;
+
+            for (char c : line)
             {
-                if (!currentNumber.empty())
+                if (c == ' ')
                 {
-                    if (numbersFound == 0)
-                        from = atoi(currentNumber.c_str());
-                    else if (numbersFound == 1)
-                        to = atoi(currentNumber.c_str());
-                    else if (numbersFound == 2)
-                        weight = atoi(currentNumber.c_str());
-                    numbersFound++;
-                    currentNumber.clear();
+                    if (!currentNumber.empty())
+                    {
+                        if (numbersFound == 0)
+                            from = atoi(currentNumber.c_str());
+                        else if (numbersFound == 1)
+                            to = atoi(currentNumber.c_str());
+                        else if (numbersFound == 2)
+                            weight = atoi(currentNumber.c_str());
+                        numbersFound++;
+                        currentNumber.clear();
+                    }
+                }
+                else if (c >= '0' && c <= '9')
+                {
+                    currentNumber += c;
                 }
             }
-            else if (c >= '0' && c <= '9')
+            if (!currentNumber.empty() && numbersFound < 3)
             {
-                currentNumber += c;
+                if (numbersFound == 0)
+                    from = atoi(currentNumber.c_str());
+                else if (numbersFound == 1)
+                    to = atoi(currentNumber.c_str());
+                else if (numbersFound == 2)
+                    weight = atoi(currentNumber.c_str());
+                numbersFound++;
+            }
+
+            if (numbersFound == 3 && from != to && weight > 0)
+            {
+                snprintf(inputText, sizeof(inputText), "%d %d %d", from, to, weight);
+                currentState = INSERT;
+                ProcessInsert();
+                count++;
             }
         }
-        if (!currentNumber.empty() && numbersFound < 3)
+        searchResult = "Instantly loaded " + to_string(count) + " edges from " + string(filePath);
+    }
+    else {
+        while (getline(file, line))
         {
-            if (numbersFound == 0)
-                from = atoi(currentNumber.c_str());
-            else if (numbersFound == 1)
-                to = atoi(currentNumber.c_str());
-            else if (numbersFound == 2)
-                weight = atoi(currentNumber.c_str());
-            numbersFound++;
-        }
+            int from = -1, to = -1, weight = -1;
+            int numbersFound = 0;
+            string currentNumber;
 
-        if (numbersFound == 3 && from != to && weight > 0)
-        {
-            snprintf(inputText, sizeof(inputText), "%d %d %d", from, to, weight);
-            currentState = INSERT;
-            ProcessInsert();
+            for (char c : line)
+            {
+                if (c == ' ')
+                {
+                    if (!currentNumber.empty())
+                    {
+                        if (numbersFound == 0)
+                            from = atoi(currentNumber.c_str());
+                        else if (numbersFound == 1)
+                            to = atoi(currentNumber.c_str());
+                        else if (numbersFound == 2)
+                            weight = atoi(currentNumber.c_str());
+                        numbersFound++;
+                        currentNumber.clear();
+                    }
+                }
+                else if (c >= '0' && c <= '9')
+                {
+                    currentNumber += c;
+                }
+            }
+            if (!currentNumber.empty() && numbersFound < 3)
+            {
+                if (numbersFound == 0)
+                    from = atoi(currentNumber.c_str());
+                else if (numbersFound == 1)
+                    to = atoi(currentNumber.c_str());
+                else if (numbersFound == 2)
+                    weight = atoi(currentNumber.c_str());
+                numbersFound++;
+            }
+
+            if (numbersFound == 3 && from != to && weight > 0)
+            {
+                snprintf(inputText, sizeof(inputText), "%d %d %d", from, to, weight);
+                currentState = INSERT;
+                ProcessInsert();
+                count++;
+            }
         }
+        searchResult = "Loaded " + to_string(count) + " edges from " + string(filePath);
     }
 
     file.close();
@@ -925,8 +981,8 @@ void GraphApp::ProcessFileInput()
 
 void runGraph()
 {
-    const int screenWidth = 1400;  // Kept as reference
-    const int screenHeight = 1000; // Kept as reference
+    const int screenWidth = 1400;
+    const int screenHeight = 1000;
 
     GraphApp app;
     bool shouldReturn = false;
@@ -935,5 +991,4 @@ void runGraph()
         app.Update();
         app.Draw(shouldReturn);
     }
-    // Removed CloseWindow()
 }

@@ -53,6 +53,8 @@ public:
     void updateAnimation(float deltaTime);
     void draw(const std::vector<Node*>& highlightPath);
     void LoadFromFile(std::string& searchResult);
+    bool instantMode; // For instant execution toggle
+    Rectangle instantBtn; // Instant mode button
 };
 
 #endif

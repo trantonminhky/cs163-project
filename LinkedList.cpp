@@ -10,7 +10,10 @@
 
 NodeL::NodeL(int val) : value(val), next(nullptr), x(0), y(0), targetX(0), targetY(0) {}
 
-LinkedList::LinkedList() : head(nullptr) {}
+LinkedList::LinkedList() : head(nullptr), instantMode(false) {
+    const int screenHeight = 1000;
+    instantBtn = { 900, screenHeight - 120, 100, 40 }; // Initialize instant button
+}
 
 LinkedList::~LinkedList() {
     deleteList(head);
@@ -179,10 +182,16 @@ void LinkedList::calculatePositions(NodeL* node, int startX, int startY, int xOf
 void LinkedList::updateAnimation(float deltaTime) {
     NodeL* current = head;
     while (current) {
-        float dx = current->targetX - current->x;
-        float dy = current->targetY - current->y;
-        current->x += dx * deltaTime * 2.0f;
-        current->y += dy * deltaTime * 2.0f;
+        if (instantMode) {
+            current->x = current->targetX; // Instant position update
+            current->y = current->targetY;
+        }
+        else {
+            float dx = current->targetX - current->x;
+            float dy = current->targetY - current->y;
+            current->x += dx * deltaTime * 2.0f;
+            current->y += dy * deltaTime * 2.0f;
+        }
         current = current->next;
     }
 }
@@ -256,18 +265,32 @@ void LinkedList::LoadFromFile(std::string& searchResult) {
 
     int value;
     int count = 0;
-    while (fscanf_s(file, "%d", &value) == 1) {
-        insert(value);
-        count++;
+    if (instantMode) {
+        while (fscanf_s(file, "%d", &value) == 1) {
+            insert(value);
+            calculatePositions(head, 50, GetScreenHeight() / 2, 100); // Update positions per insert
+            updateAnimation(0.0f); // Force instant position update
+            count++;
+        }
+        searchResult = "Instantly loaded " + std::to_string(count) + " values from " + std::string(filePath);
+    }
+    else {
+        std::vector<NodeL*> path;
+        while (fscanf_s(file, "%d", &value) == 1) {
+            path.clear();
+            head = insert(head, value, path);
+            calculatePositions(head, 50, GetScreenHeight() / 2, 100);
+            count++;
+        }
+        searchResult = "Loaded " + std::to_string(count) + " values from " + std::string(filePath);
     }
 
     fclose(file);
-    searchResult = "Loaded " + std::to_string(count) + " values from " + std::string(filePath);
 }
 
 void runLinkedList() {
-    const int screenWidth = 1400;  // Kept as reference
-    const int screenHeight = 1000; // Kept as reference
+    const int screenWidth = 1400;
+    const int screenHeight = 1000;
 
     LinkedList list;
     std::vector<NodeL*> searchPath;
@@ -295,6 +318,7 @@ void runLinkedList() {
 
     Color TEAL = { 0, 128, 128, 255 };
     Color loadFileColor = { 0, 102, 204, 255 };
+    Color instantColor = { 255, 105, 180, 255 }; // Pink for instant mode
 
     bool shouldReturn = false;
 
@@ -321,6 +345,7 @@ void runLinkedList() {
         bool undoHover = CheckCollisionPointRec(GetMousePosition(), undoButton);
         bool redoHover = CheckCollisionPointRec(GetMousePosition(), redoButton);
         bool loadFileHover = CheckCollisionPointRec(GetMousePosition(), loadFileButton);
+        bool instantHover = CheckCollisionPointRec(GetMousePosition(), list.instantBtn);
         bool returnHover = CheckCollisionPointRec(GetMousePosition(), returnButton);
 
         bool insertClicked = isButtonClicked(insertButton);
@@ -331,7 +356,21 @@ void runLinkedList() {
         bool undoClicked = isButtonClicked(undoButton);
         bool redoClicked = isButtonClicked(redoButton);
         bool loadFileClicked = isButtonClicked(loadFileButton);
+        bool instantClicked = isButtonClicked(list.instantBtn);
         bool returnClicked = isButtonClicked(returnButton);
+
+        if (instantClicked) {
+            list.instantMode = !list.instantMode;
+            searchResult = list.instantMode ? "Instant Mode ON" : "Step-by-Step Mode ON";
+            if (list.instantMode) {
+                searching = false;
+                inserting = false;
+                searchPath.clear();
+                insertPath.clear();
+                searchTimer = 0.0f;
+                searchIndex = 0;
+            }
+        }
 
         if (insertClicked && inputIndex > 0) {
             int value = atoi(inputBuffer);
@@ -339,10 +378,18 @@ void runLinkedList() {
             list.insert(value);
             inputIndex = 0;
             inputBuffer[0] = '\0';
-            searchPath = insertPath;
-            searchIndex = 0;
-            searchTimer = 0.0f;
-            inserting = true;
+            if (!list.instantMode) {
+                list.search(value, insertPath); // Update insertPath for animation
+                searchPath = insertPath;
+                searchIndex = 0;
+                searchTimer = 0.0f;
+                inserting = true;
+            }
+            else {
+                searchPath.clear();
+                inserting = false;
+                list.updateAnimation(0.0f); // Force instant position update
+            }
             searchResult = "";
         }
         if (deleteClicked && inputIndex > 0) {
@@ -352,17 +399,34 @@ void runLinkedList() {
             inputBuffer[0] = '\0';
             searching = false;
             inserting = false;
+            searchPath.clear();
+            insertPath.clear();
             searchResult = "";
+            if (list.instantMode) {
+                list.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (searchClicked && inputIndex > 0) {
             lastSearchValue = atoi(inputBuffer);
             list.search(lastSearchValue, searchPath);
             inputIndex = 0;
             inputBuffer[0] = '\0';
-            searchIndex = 0;
-            searchTimer = 0.0f;
-            searching = true;
-            searchResult = "Searching for " + std::to_string(lastSearchValue) + "...";
+            if (!list.instantMode) {
+                searchIndex = 0;
+                searchTimer = 0.0f;
+                searching = true;
+                searchResult = "Searching for " + std::to_string(lastSearchValue) + "...";
+            }
+            else {
+                if (!searchPath.empty() && searchPath.back()->value == lastSearchValue) {
+                    searchResult = "Node " + std::to_string(lastSearchValue) + " is found";
+                }
+                else {
+                    searchResult = "Node " + std::to_string(lastSearchValue) + " is not found";
+                }
+                searching = false;
+                searchPath.clear();
+            }
         }
         if (clearClicked) {
             list.clear();
@@ -382,6 +446,9 @@ void runLinkedList() {
             searching = false;
             inserting = false;
             searchResult = "";
+            if (list.instantMode) {
+                list.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (undoClicked) {
             NodeL* affectedNode = list.undo(affectedPath);
@@ -390,6 +457,9 @@ void runLinkedList() {
             searchPath.clear();
             insertPath.clear();
             searchResult = "";
+            if (list.instantMode && affectedNode) {
+                list.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (redoClicked) {
             NodeL* affectedNode = list.redo(affectedPath);
@@ -398,6 +468,9 @@ void runLinkedList() {
             searchPath.clear();
             insertPath.clear();
             searchResult = "";
+            if (list.instantMode && affectedNode) {
+                list.updateAnimation(0.0f); // Force instant position update
+            }
         }
         if (loadFileClicked) {
             list.LoadFromFile(searchResult);
@@ -409,7 +482,7 @@ void runLinkedList() {
             shouldReturn = true;
         }
 
-        if ((searching || inserting) && !searchPath.empty()) {
+        if ((searching || inserting) && !searchPath.empty() && !list.instantMode) {
             searchTimer += deltaTime;
             if (searchTimer >= 0.5f) {
                 searchIndex++;
@@ -437,7 +510,7 @@ void runLinkedList() {
         DrawText("Linked List Visualise", screenWidth / 2 - MeasureText("Linked List Visualise", 100) / 2, screenHeight / 4, 100, Fade(GRAY, 0.2f));
 
         std::vector<NodeL*> currentHighlight;
-        if (searching || inserting) {
+        if ((searching || inserting) && !list.instantMode) {
             if (searchIndex < static_cast<int>(searchPath.size())) {
                 currentHighlight.push_back(searchPath[searchIndex]);
             }
@@ -457,6 +530,7 @@ void runLinkedList() {
         drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
         drawButton(loadFileButton, "File", loadFileColor, loadFileHover, loadFileClicked);
+        drawButton(list.instantBtn, list.instantMode ? "Instant" : "Step", instantColor, instantHover, instantClicked);
         drawButton(returnButton, "Return", YELLOW, returnHover, returnClicked);
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
@@ -467,5 +541,4 @@ void runLinkedList() {
 
         EndDrawing();
     }
-    // Removed CloseWindow()
 }
