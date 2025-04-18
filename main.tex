@@ -147,6 +147,8 @@ This project uses dynamic memory allocation to store nodes and edges. Typically,
 \end{lstlisting}
 For hash tables, we will use linked list to store collisions. To enable the undo/redo features, we shall use \lstinline[language=c++]|std::stack| to store deep copies of states. This is optimal in terms of efficiency and simplicity; the usage of stacks obeys the LIFO nature of the action of undoing/redoing.
 
+We chose these methods of data storage with rationales that this should boost efficiency and simplicity by storing the data in memory as well as avoiding the complexity of a persistent file-based storage. This also allows real-time visualization and aligns with the current goals and operations.
+
 \section{Project Architecture}
 We outline the overall project's directory as follows:
 \begin{lstlisting}
