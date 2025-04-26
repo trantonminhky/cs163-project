@@ -343,14 +343,14 @@ The usage flow of the Linked List data structure is as follows:
 	\item User enters "15" and clicks "Search".
 	\item \lstinline|runLinkedList()| calls \lstinline|list.search(15, searchPath)|.
 	\item \lstinline|LinkedList::search| builds \lstinline|searchPath| (e.g. \lstinline|[5,10,15]|).
-	\item \lstinline|updateAnimation| adjusts position (horizontal at $y = 500$).
-	\item \lstinline|draw| iterates \lstinline|searchPath|, pulsing each node every 0.5 seconds (\lstinline|searchTimer|).
+	\item \lstinline|updateAnimation| adjusts position (horizontal at $y = 500$) and \lstinline|draw| pulses each node every 0.5 seconds, which is \lstinline|searchTimer| (this is ignored if instant mode is enabled).
+	\item \lstinline|draw| renders the list with highlights.
 \end{enumerate}
 This works in tandem with the background processes, which we called collaboration:
 \begin{enumerate}
 	\item \lstinline|NodeL| stores values and links.
 	\item \lstinline|search| performs linear traversal.
-	\item raylib's timing (\lstinline|GetFrameTime|) and drawing (\lstinline|DrawCircle|) creates the animation effect.
+	\item raylib's timing (\lstinline|GetFrameTime|) and drawing (\lstinline|DrawCircle|) creates the animation effect unless instant mode is enabled.
 \end{enumerate}
 
 \subsubsection{Hash Table}
@@ -359,13 +359,13 @@ The usage flow of the Hash Table data structure is as follows:
 	\item User clicks "Load", selects a file via \lstinline|tinyfd_openFileDialog|.
 	\item \lstinline|UI::update| reads integers into \lstinline|insertQueue| (or inserts instantly with \lstinline|instantMode|).
 	\item \lstinline|update| processes \lstinline|insertQueue|, calling \lstinline|HashTable::insert| per value.
-	\item Animation states (\lstinline|INDEX|, \lstinline|EXISTING_NODES|, \lstinline|NEW_NODE|) highlight slots and nodes.
+	\item Animation states (\lstinline|INDEX|, \lstinline|EXISTING_NODES|, \lstinline|NEW_NODE|) highlight slots and nodes (immediately inserts all values without animation if instant mode is turned on).
 	\item \lstinline|draw| renders the updated table.
 \end{enumerate}
 This works in tandem with collaboration:
 \begin{enumerate}
 	\item \lstinline|NodeH| and \lstinline|HashTable| manage data with chaining.
-	\item \lstinline|UI| orchestrates animation and input handling.
+	\item \lstinline|UI| orchestrates animation (unless it is instant mode) and input handling.
 	\item \lstinline|TinyFileDialogs| and raylib enable file input and visualization.
 \end{enumerate}
 
@@ -374,14 +374,14 @@ The usage flow of the Graph data structure is as follows:
 \begin{enumerate}
 	\item User clicks "Kruskal's Algorithm".
 	\item \lstinline|runGraph()| calls \lstinline|app.Update()| and \lstinline|app.Draw(shouldReturn)|.
-	\item \lstinline|GraphApp::RunKruskalStepByStep| sorts edges by weights using \lstinline|std::sort|, initializes parent for \lstinline|Union-Find|, iterates edges every one second (\lstinline|kruskalTimer|) while calling \lstinline|Union-Find| to build MST and highlights accepted edges (\lstinline|highlighted = true|).
-	\item \lstinline|Draw| renders vertices, edges and highlights, showing MST progress.
+	\item \lstinline|GraphApp::RunKruskalStepByStep| sorts edges by weights using \lstinline|std::sort|, initializes parent for \lstinline|Union-Find|, iterates edges every one second (\lstinline|kruskalTimer|) while calling \lstinline|Union-Find| to build MST and highlights accepted edges (\lstinline|highlighted = true|). If instant mode is enabled, the MST is completed instantly instead.
+	\item \lstinline|Draw| renders vertices, edges and highlights, showing MST progress (bar the intermediate states if instant mode is enabled).
 \end{enumerate}
 This works in tandem with collaboration:
 \begin{enumerate}
 	\item \lstinline|Vertex| and \lstinline|Edge| store graph data.
 	\item \lstinline|RunKruskalStepByStep| implements Kruskal's with \lstinline|Union-Find|.
-	\item raylib's \lstinline|DrawLineV| and \lstinline|DrawCircleV| visualize the process.
+	\item raylib's \lstinline|DrawLineV| and \lstinline|DrawCircleV| visualize the process (instantly in instant mode).
 \end{enumerate}
 
 \subsubsection{AVL Tree}
@@ -391,7 +391,7 @@ The usage flow of the AVL Tree data structure is as follows:
 	\item \lstinline|runAVL()| detects the click (\lstinline|isButtonClicked(insertButton)|) and calls \lstinline|tree.insert(42)|.
 	\item \lstinline|AVLTree::insert| traverses the tree, inserts the node, and balances if needed (e.g. \lstinline|rightRotate|).
 	\item \lstinline|calculatePositions| assigns \lstinline|targetX| and \lstinline|targetY| (e.g. $x = 700 - \text{\lstinline|offset|},y = 50 + \text{\lstinline|depth|}\times100$).
-	\item \lstinline|updateAnimation| moves the node to its target over frames.
+	\item \lstinline|updateAnimation| moves the node to its target over frames (\lstinline|x| and \lstinline|y| are set to )
 	\item \lstinline|draw| renders the tree, showing the new node.
 \end{enumerate}
 This works in tandem with collaboration:
