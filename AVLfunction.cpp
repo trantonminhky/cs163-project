@@ -1,13 +1,78 @@
-#include "AVL.h"
-#include "raylib.h"
-#include <cmath>
-#include <string>
+#include "avl.h"
 #include <random>
-#include <stdio.h>
+#include <algorithm>
+#include "tinyfiledialogs.h"
+#ifdef _WIN32
+#include <locale>
+#include <codecvt>
+#endif
+
+bool isButtonClicked(Rectangle button) {
+    return CheckCollisionPointRec(GetMousePosition(), button) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON);
+}
+
+void drawButton(Rectangle button, const char* text, Color baseColor, bool hover, bool clicked) {
+    Color color = hover ? Fade(baseColor, 0.8f) : baseColor;
+    if (clicked) color = Fade(baseColor, 0.6f);
+    float scale = clicked ? 0.95f : (hover ? 1.05f : 1.0f);
+
+    Rectangle scaledButton = {
+        button.x + button.width * (1.0f - scale) / 2,
+        button.y + button.height * (1.0f - scale) / 2,
+        button.width * scale,
+        button.height * scale
+    };
+
+    DrawRectangleRounded(scaledButton, 0.3f, 10, color);
+    DrawRectangleLinesEx(scaledButton, 2, BLACK);
+
+    Vector2 textSize = MeasureTextEx(GetFontDefault(), text, 20, 1);
+    DrawText(text,
+        scaledButton.x + (scaledButton.width - textSize.x) / 2,
+        scaledButton.y + (scaledButton.height - textSize.y) / 2,
+        20, WHITE);
+}
 
 Node::Node(int value) : key(value), height(1), left(nullptr), right(nullptr), x(0), y(0), targetX(0), targetY(0), isDying(false) {}
 
-AVLTree::AVLTree() : root(nullptr) {}
+AVLTree::AVLTree() : root(nullptr), instantMode(false), currentOperation("") {
+    instantBtn = { 900, 880, 100, 40 };
+    insertCode = {
+        "insert(node, key):",
+        "  if node is null:",
+        "    return new Node(key)",
+        "  if key < node.key:",
+        "    node.left = insert(node.left, key)",
+        "  else if key > node.key:",
+        "    node.right = insert(node.right, key)",
+        "  else:",
+        "    return node // Duplicate key",
+        "  updateHeight(node)",
+        "  balance = getBalance(node)",
+        "  if balance > 1 and key < node.left.key:",
+        "    return rightRotate(node)",
+        "  if balance < -1 and key > node.right.key:",
+        "    return leftRotate(node)",
+        "  if balance > 1 and key > node.left.key:",
+        "    node.left = leftRotate(node.left)",
+        "    return rightRotate(node)",
+        "  if balance < -1 and key < node.right.key:",
+        "    node.right = rightRotate(node.right)",
+        "    return leftRotate(node)",
+        "  return node"
+    };
+    searchCode = {
+        "search(node, key):",
+        "  if node is null:",
+        "    return not found",
+        "  if key == node.key:",
+        "    return found",
+        "  if key < node.key:",
+        "    return search(node.left, key)",
+        "  else:",
+        "    return search(node.right, key)"
+    };
+}
 
 AVLTree::~AVLTree() {
     deleteTree(root);
@@ -75,49 +140,88 @@ Node* AVLTree::leftRotate(Node* x) {
     return y;
 }
 
-Node* AVLTree::insert(Node* node, int key, std::vector<Node*>& path) {
+Node* AVLTree::insert(Node* node, int key, std::vector<Node*>& path, std::string& searchResult, std::vector<int>& codePath) {
+    codePath.push_back(0); // Line: insert(node, key)
     if (!node) {
+        codePath.push_back(2); // Line: return new Node(key)
         Node* newNode = new Node(key);
         path.push_back(newNode);
         return newNode;
     }
 
     path.push_back(node);
-    if (key < node->key)
-        node->left = insert(node->left, key, path);
-    else if (key > node->key)
-        node->right = insert(node->right, key, path);
-    else
-        return node;
+    codePath.push_back(3); // Line: if key < node.key
+    if (key < node->key) {
+        codePath.push_back(4); // Line: node.left = insert(node.left, key)
+        node->left = insert(node->left, key, path, searchResult, codePath);
+    }
+    else {
+        codePath.push_back(5); // Line: else if key > node.key
+        if (key > node->key) {
+            codePath.push_back(6); // Line: node.right = insert(node.right, key)
+            node->right = insert(node->right, key, path, searchResult, codePath);
+        }
+        else {
+            codePath.push_back(7); // Line: return node // Duplicate key
+            searchResult = "The value of node is already in tree";
+            return node;
+        }
+    }
 
+    codePath.push_back(9); // Line: updateHeight(node)
     updateHeight(node);
+    codePath.push_back(10); // Line: balance = getBalance(node)
     int balance = getBalance(node);
 
-    if (balance > 1 && key < node->left->key) return rightRotate(node);
-    if (balance < -1 && key > node->right->key) return leftRotate(node);
-    if (balance > 1 && key > node->left->key) {
-        node->left = leftRotate(node->left);
+    codePath.push_back(11); // Line: if balance > 1 and key < node.left.key
+    if (balance > 1 && key < node->left->key) {
+        codePath.push_back(12); // Line: return rightRotate(node)
         return rightRotate(node);
     }
+    codePath.push_back(13); // Line: if balance < -1 and key > node.right.key
+    if (balance < -1 && key > node->right->key) {
+        codePath.push_back(14); // Line: return leftRotate(node)
+        return leftRotate(node);
+    }
+    codePath.push_back(15); // Line: if balance > 1 and key > node.left.key
+    if (balance > 1 && key > node->left->key) {
+        codePath.push_back(16); // Line: node.left = leftRotate(node.left)
+        node->left = leftRotate(node->left);
+        codePath.push_back(17); // Line: return rightRotate(node)
+        return rightRotate(node);
+    }
+    codePath.push_back(18); // Line: if balance < -1 and key < node.right.key
     if (balance < -1 && key < node->right->key) {
+        codePath.push_back(19); // Line: node.right = rightRotate(node.right)
         node->right = rightRotate(node->right);
+        codePath.push_back(20); // Line: return leftRotate(node)
         return leftRotate(node);
     }
 
+    codePath.push_back(21); // Line: return node
     return node;
 }
 
-void AVLTree::insert(int key) {
+void AVLTree::insert(int key, std::string& searchResult) {
     Node* treeCopy = deepCopy(root);
-    history.push({ treeCopy, {true, key} });
-    while (!redoStack.empty()) {
-        deleteTree(redoStack.top().first);
-        redoStack.pop();
-    }
-
     std::vector<Node*> path;
-    root = insert(root, key, path);
-    calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1);
+    std::vector<int> codePath;
+    currentOperation = "insert";
+    currentCodePath.clear();
+    searchResult = "";
+    root = insert(root, key, path, searchResult, codePath);
+    if (searchResult.empty()) {
+        history.push({ treeCopy, {true, key} });
+        while (!redoStack.empty()) {
+            deleteTree(redoStack.top().first);
+            redoStack.pop();
+        }
+        calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1);
+    }
+    else {
+        deleteTree(treeCopy);
+    }
+    currentCodePath = codePath;
 }
 
 Node* AVLTree::findMin(Node* node) {
@@ -209,7 +313,7 @@ Node* AVLTree::undo(std::vector<Node*>& affectedPath) {
     root = previousState;
 
     affectedPath.clear();
-    search(value, affectedPath);
+    search(value, affectedPath, currentCodePath);
     calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1);
     return affectedPath.empty() ? nullptr : affectedPath.back();
 }
@@ -229,7 +333,7 @@ Node* AVLTree::redo(std::vector<Node*>& affectedPath) {
     root = redoState;
 
     affectedPath.clear();
-    search(value, affectedPath);
+    search(value, affectedPath, currentCodePath);
     calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1);
     return affectedPath.empty() ? nullptr : affectedPath.back();
 }
@@ -245,13 +349,34 @@ void AVLTree::clearHistory() {
     }
 }
 
-void AVLTree::search(int key, std::vector<Node*>& searchPath) {
+void AVLTree::search(int key, std::vector<Node*>& searchPath, std::vector<int>& codePath) {
     searchPath.clear();
+    codePath.clear();
     Node* current = root;
-    while (current) {
+    int step = 0;
+    while (current && step < 100) {
         searchPath.push_back(current);
-        if (key == current->key) break;
-        current = key < current->key ? current->left : current->right;
+        codePath.push_back(0); // Line: search(node, key)
+        codePath.push_back(3); // Line: if key == node.key
+        if (key == current->key) {
+            codePath.push_back(4); // Line: return found
+            break;
+        }
+        codePath.push_back(5); // Line: if key < node.key
+        if (key < current->key) {
+            codePath.push_back(6); // Line: return search(node.left, key)
+            current = current->left;
+        }
+        else {
+            codePath.push_back(7); // Line: return search(node.right, key)
+            current = current->right;
+        }
+        codePath.push_back(1); // Line: if node is null
+        if (!current) {
+            codePath.push_back(2); // Line: return not found
+            break;
+        }
+        step++;
     }
 }
 
@@ -286,10 +411,16 @@ void AVLTree::updateAnimation(float deltaTime) {
     }
 
     for (Node* node : nodes) {
-        float dx = node->targetX - node->x;
-        float dy = node->targetY - node->y;
-        node->x += dx * deltaTime * 2.0f;
-        node->y += dy * deltaTime * 2.0f;
+        if (instantMode) {
+            node->x = node->targetX;
+            node->y = node->targetY;
+        }
+        else {
+            float dx = node->targetX - node->x;
+            float dy = node->targetY - node->y;
+            node->x += dx * deltaTime * 0.5f;
+            node->y += dy * deltaTime * 0.5f;
+        }
     }
 }
 
@@ -336,7 +467,8 @@ void AVLTree::generateRandom(int count, int minValue, int maxValue) {
 
     for (int i = 0; i < count; ++i) {
         int randomKey = dis(gen);
-        insert(randomKey);
+        std::string dummyResult;
+        insert(randomKey, dummyResult);
     }
 }
 
@@ -377,12 +509,405 @@ void AVLTree::LoadFromFile(std::string& searchResult) {
 
     int value;
     int count = 0;
-    // Replaced fscanf with fscanf_s for Visual Studio
-    while (fscanf_s(file, "%d", &value) == 1) {
-        insert(value);
-        count++;
+    if (instantMode) {
+        while (fscanf_s(file, "%d", &value) == 1) {
+            std::string dummyResult;
+            insert(value, dummyResult);
+            calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1);
+            updateAnimation(0.0f);
+            count++;
+        }
+        searchResult = "Instantly loaded " + std::to_string(count) + " values from " + std::string(filePath);
+    }
+    else {
+        std::vector<Node*> path;
+        while (fscanf_s(file, "%d", &value) == 1) {
+            path.clear();
+            std::string dummyResult;
+            root = insert(root, value, path, dummyResult, currentCodePath);
+            calculatePositions(root, GetScreenWidth() / 2, 50, 300, 1);
+            count++;
+        }
+        searchResult = "Loaded " + std::to_string(count) + " values from " + std::string(filePath);
     }
 
     fclose(file);
-    searchResult = "Loaded " + std::to_string(count) + " values from " + std::string(filePath);
+}
+
+void AVLTree::DrawCodeBox(int screenWidth, int screenHeight, int currentCodeIndex) {
+    static float codeBoxAlpha = 0.0f;
+    static float codeBoxY = static_cast<float>(screenHeight);
+    static bool codeBoxVisible = false;
+
+    if (!currentOperation.empty()) {
+        codeBoxVisible = true;
+
+        const std::vector<std::string>& code = (currentOperation == "insert") ? insertCode : searchCode;
+        int maxLines = std::min(static_cast<int>(code.size()), 20);
+        int boxWidth = 270;
+        int lineHeight = 18;
+        int padding = 10;
+        int boxHeight = maxLines * lineHeight + 2 * padding;
+
+        int xPos = screenWidth - boxWidth - 30;
+        float targetY = static_cast<float>(screenHeight - boxHeight - 30);
+
+        codeBoxAlpha += 0.05f;
+        if (codeBoxAlpha > 1.0f) codeBoxAlpha = 1.0f;
+
+        if (codeBoxY > targetY) {
+            codeBoxY -= 10.0f;
+            if (codeBoxY < targetY) codeBoxY = targetY;
+        }
+
+        DrawRectangle(xPos, static_cast<int>(codeBoxY), boxWidth, boxHeight, Fade(LIGHTGRAY, 0.8f * codeBoxAlpha));
+
+        int yOffset = static_cast<int>(codeBoxY) + padding;
+        for (int i = 0; i < maxLines; ++i) {
+            Color textColor = (i == currentCodeIndex) ? RED : BLACK;
+            std::string displayLine = code[i].substr(0, 35);
+            DrawText(displayLine.c_str(), xPos + 10, yOffset, 15, Fade(textColor, codeBoxAlpha));
+            yOffset += lineHeight;
+        }
+    }
+    else {
+        codeBoxVisible = false;
+        codeBoxAlpha = 0.0f;
+        codeBoxY = static_cast<float>(screenHeight);
+    }
+}
+
+void AVLTree::runAVL() {
+    const int screenWidth = 1400;
+    const int screenHeight = 1000;
+
+    std::vector<Node*> searchPath;
+    std::vector<Node*> insertPath;
+    std::vector<Node*> affectedPath;
+    char inputBuffer[10] = "";
+    int inputIndex = 0;
+    float operationTimer = 0.0f;
+    int operationIndex = 0;
+    bool searching = false;
+    bool inserting = false;
+    std::string searchResult = "";
+    int lastSearchValue = 0;
+
+    Rectangle insertButton = { 20, screenHeight - 120, 100, 40 };
+    Rectangle deleteButton = { 130, screenHeight - 120, 100, 40 };
+    Rectangle searchButton = { 240, screenHeight - 120, 100, 40 };
+    Rectangle clearButton = { 350, screenHeight - 120, 100, 40 };
+    Rectangle randomButton = { 460, screenHeight - 120, 100, 40 };
+    Rectangle undoButton = { 570, screenHeight - 120, 100, 40 };
+    Rectangle redoButton = { 680, screenHeight - 120, 100, 40 };
+    Rectangle FileButton = { 790, screenHeight - 120, 100, 40 };
+    Rectangle inputBox = { 20, screenHeight - 60, 100, 40 };
+    Rectangle returnButton = { screenWidth - 120, 10, 100, 40 };
+
+    Color TEAL = { 0, 128, 128, 255 };
+    Color Mediumblue = { 0, 102, 204, 255 };
+    Color instantColor = { 255, 105, 180, 255 };
+
+    bool shouldReturn = false;
+
+    while (!WindowShouldClose() && !shouldReturn) {
+        float deltaTime = GetFrameTime();
+
+        // Input handling: Accept printable characters
+        int key = GetCharPressed();
+        while (key > 0) {
+            if ((key >= 32 && key <= 126) && inputIndex < 9) {
+                inputBuffer[inputIndex++] = (char)key;
+                inputBuffer[inputIndex] = '\0';
+            }
+            key = GetCharPressed();
+        }
+        // Handle backspace: Delete up to 3 characters
+        if (IsKeyPressed(KEY_BACKSPACE) && inputIndex > 0) {
+            int charsToDelete = std::min(3, inputIndex);
+            inputIndex -= charsToDelete;
+            inputBuffer[inputIndex] = '\0';
+        }
+
+        bool insertHover = CheckCollisionPointRec(GetMousePosition(), insertButton);
+        bool deleteHover = CheckCollisionPointRec(GetMousePosition(), deleteButton);
+        bool searchHover = CheckCollisionPointRec(GetMousePosition(), searchButton);
+        bool clearHover = CheckCollisionPointRec(GetMousePosition(), clearButton);
+        bool randomHover = CheckCollisionPointRec(GetMousePosition(), randomButton);
+        bool undoHover = CheckCollisionPointRec(GetMousePosition(), undoButton);
+        bool redoHover = CheckCollisionPointRec(GetMousePosition(), redoButton);
+        bool FileHover = CheckCollisionPointRec(GetMousePosition(), FileButton);
+        bool instantHover = CheckCollisionPointRec(GetMousePosition(), instantBtn);
+        bool returnHover = CheckCollisionPointRec(GetMousePosition(), returnButton);
+
+        bool insertClicked = isButtonClicked(insertButton) || (IsKeyPressed(KEY_ENTER) && inputIndex > 0);
+        bool deleteClicked = isButtonClicked(deleteButton);
+        bool searchClicked = isButtonClicked(searchButton);
+        bool clearClicked = isButtonClicked(clearButton);
+        bool randomClicked = isButtonClicked(randomButton);
+        bool undoClicked = isButtonClicked(undoButton);
+        bool redoClicked = isButtonClicked(redoButton);
+        bool FileClicked = isButtonClicked(FileButton);
+        bool instantClicked = isButtonClicked(instantBtn);
+        bool returnClicked = isButtonClicked(returnButton);
+
+        if (instantClicked) {
+            instantMode = !instantMode;
+            searchResult = instantMode ? "Instant Mode ON" : "Step-by-Step Mode ON";
+            if (instantMode) {
+                searching = false;
+                inserting = false;
+                searchPath.clear();
+                insertPath.clear();
+                operationTimer = 0.0f;
+                operationIndex = 0;
+                currentOperation = "";
+                currentCodePath.clear();
+            }
+        }
+
+        if (insertClicked && inputIndex > 0) {
+            try {
+                int value = std::stoi(inputBuffer);
+                insertPath.clear();
+                searchResult = "";
+                insert(value, searchResult);
+                if (searchResult.empty()) {
+                    inputIndex = 0;
+                    inputBuffer[0] = '\0';
+                    if (!instantMode) {
+                        currentOperation = "insert";
+                        search(value, insertPath, currentCodePath);
+                        searchPath = insertPath;
+                        operationIndex = 0;
+                        operationTimer = 0.0f;
+                        inserting = true;
+                    }
+                    else {
+                        searchPath.clear();
+                        inserting = false;
+                        updateAnimation(0.0f);
+                        currentOperation = "";
+                        currentCodePath.clear();
+                    }
+                }
+                else {
+                    inputIndex = 0;
+                    inputBuffer[0] = '\0';
+                }
+            }
+            catch (const std::exception& e) {
+                searchResult = "Invalid input. Please enter a number.";
+                currentOperation = "";
+                currentCodePath.clear();
+                inputIndex = 0;
+                inputBuffer[0] = '\0';
+            }
+        }
+        if (deleteClicked && inputIndex > 0) {
+            try {
+                int value = std::stoi(inputBuffer);
+                deleteNode(value);
+                inputIndex = 0;
+                inputBuffer[0] = '\0';
+                searching = false;
+                inserting = false;
+                searchPath.clear();
+                insertPath.clear();
+                searchResult = "";
+                currentOperation = "";
+                currentCodePath.clear();
+                if (instantMode) {
+                    updateAnimation(0.0f);
+                }
+            }
+            catch (const std::exception& e) {
+                searchResult = "Invalid input. Please enter a number.";
+                currentOperation = "";
+                currentCodePath.clear();
+                inputIndex = 0;
+                inputBuffer[0] = '\0';
+            }
+        }
+        if (searchClicked && inputIndex > 0) {
+            try {
+                lastSearchValue = std::stoi(inputBuffer);
+                currentOperation = "search";
+                currentCodePath.clear();
+                search(lastSearchValue, searchPath, currentCodePath);
+                inputIndex = 0;
+                inputBuffer[0] = '\0';
+                if (!instantMode) {
+                    operationIndex = 0;
+                    operationTimer = 0.0f;
+                    searching = true;
+                    searchResult = "Searching for " + std::to_string(lastSearchValue) + "...";
+                }
+                else {
+                    if (!searchPath.empty() && searchPath.back()->key == lastSearchValue) {
+                        searchResult = "Node " + std::to_string(lastSearchValue) + " is found";
+                    }
+                    else {
+                        searchResult = "Node " + std::to_string(lastSearchValue) + " is not found";
+                    }
+                    searching = false;
+                    searchPath.clear();
+                    currentOperation = "";
+                    currentCodePath.clear();
+                }
+            }
+            catch (const std::exception& e) {
+                searchResult = "Invalid input. Please enter a number.";
+                currentOperation = "";
+                currentCodePath.clear();
+                inputIndex = 0;
+                inputBuffer[0] = '\0';
+            }
+        }
+        if (clearClicked) {
+            clear();
+            searchPath.clear();
+            insertPath.clear();
+            affectedPath.clear();
+            searching = false;
+            inserting = false;
+            searchResult = "";
+            currentOperation = "";
+            currentCodePath.clear();
+            inputIndex = 0;
+            inputBuffer[0] = '\0';
+        }
+        if (randomClicked) {
+            clear();
+            generateRandom(10, 1, 100);
+            searchPath.clear();
+            insertPath.clear();
+            affectedPath.clear();
+            searching = false;
+            inserting = false;
+            searchResult = "";
+            currentOperation = "";
+            currentCodePath.clear();
+            inputIndex = 0;
+            inputBuffer[0] = '\0';
+            if (instantMode) {
+                updateAnimation(0.0f);
+            }
+        }
+        if (undoClicked) {
+            Node* affectedNode = undo(affectedPath);
+            searching = false;
+            inserting = false;
+            searchPath.clear();
+            insertPath.clear();
+            searchResult = "";
+            currentOperation = "";
+            currentCodePath.clear();
+            inputIndex = 0;
+            inputBuffer[0] = '\0';
+            if (instantMode && affectedNode) {
+                updateAnimation(0.0f);
+            }
+        }
+        if (redoClicked) {
+            Node* affectedNode = redo(affectedPath);
+            searching = false;
+            inserting = false;
+            searchPath.clear();
+            insertPath.clear();
+            searchResult = "";
+            currentOperation = "";
+            currentCodePath.clear();
+            inputIndex = 0;
+            inputBuffer[0] = '\0';
+            if (instantMode && affectedNode) {
+                updateAnimation(0.0f);
+            }
+        }
+        if (FileClicked) {
+            LoadFromFile(searchResult);
+            searchPath.clear();
+            inserting = false;
+            searching = false;
+            currentOperation = "";
+            currentCodePath.clear();
+            inputIndex = 0;
+            inputBuffer[0] = '\0';
+        }
+        if (returnClicked || IsKeyPressed(KEY_ESCAPE)) {
+            shouldReturn = true;
+        }
+
+        if ((searching || inserting) && !searchPath.empty() && !instantMode) {
+            operationTimer += deltaTime;
+            if (operationTimer >= 0.5f) {
+                operationIndex++;
+                operationTimer = 0.0f;
+                if (operationIndex >= static_cast<int>(searchPath.size())) {
+                    operationIndex = 0;
+                    if (searching) {
+                        if (!searchPath.empty() && searchPath.back()->key == lastSearchValue) {
+                            searchResult = "Node " + std::to_string(lastSearchValue) + " is found";
+                        }
+                        else {
+                            searchResult = "Node " + std::to_string(lastSearchValue) + " is not found";
+                        }
+                    }
+                    searching = false;
+                    inserting = false;
+                    currentOperation = "";
+                    currentCodePath.clear();
+                    inputIndex = 0;
+                    inputBuffer[0] = '\0';
+                }
+            }
+        }
+
+        updateAnimation(deltaTime);
+
+        BeginDrawing();
+        ClearBackground(WHITE);
+        DrawText("AVL Visualise", screenWidth / 2 - MeasureText("AVL Visualise", 100) / 2, screenHeight / 2 - 50, 100, Fade(GRAY, 0.2f));
+
+        std::vector<Node*> currentHighlight;
+        int currentCodeIndex = -1;
+        if ((searching || inserting) && !instantMode && operationIndex < static_cast<int>(searchPath.size())) {
+            currentHighlight.push_back(searchPath[operationIndex]);
+            int codePathIndex = operationIndex * (currentCodePath.size() / std::max(1, static_cast<int>(searchPath.size())));
+            if (codePathIndex < static_cast<int>(currentCodePath.size())) {
+                currentCodeIndex = currentCodePath[codePathIndex];
+            }
+        }
+
+        draw(currentHighlight);
+
+        DrawCodeBox(screenWidth, screenHeight, currentCodeIndex);
+
+        drawButton(insertButton, "Insert", GREEN, insertHover, insertClicked);
+        drawButton(deleteButton, "Delete", RED, deleteHover, deleteClicked);
+        drawButton(searchButton, "Search", BLUE, searchHover, searchClicked);
+        drawButton(clearButton, "Clear", PURPLE, clearHover, clearClicked);
+        drawButton(randomButton, "Random", ORANGE, randomHover, randomClicked);
+        drawButton(undoButton, "Undo", GRAY, undoHover, undoClicked);
+        drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
+        drawButton(FileButton, "File", Mediumblue, FileHover, FileClicked);
+        drawButton(instantBtn, instantMode ? "Instant" : "Step", instantColor, instantHover, instantClicked);
+        drawButton(returnButton, "Return", YELLOW, returnHover, returnClicked);
+
+        bool isValidInput = true;
+        for (int i = 0; i < inputIndex; ++i) {
+            if (inputBuffer[i] < '0' || inputBuffer[i] > '9') {
+                isValidInput = false;
+                break;
+            }
+        }
+        Color inputBorderColor = (!isValidInput || searchResult.find("Invalid") != std::string::npos) ? RED : BLACK;
+        DrawRectangleRec(inputBox, LIGHTGRAY);
+        DrawRectangleLinesEx(inputBox, 2, inputBorderColor);
+        DrawText(inputBuffer, inputBox.x + 5, inputBox.y + 10, 30, BLACK);
+        DrawText("Enter number, then click action or press Enter", inputBox.x, inputBox.y + 40, 20, DARKGRAY);
+        DrawText(searchResult.c_str(), 20, screenHeight - 160, 20, DARKGRAY);
+
+        EndDrawing();
+    }
 }
