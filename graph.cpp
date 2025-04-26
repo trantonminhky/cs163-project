@@ -75,7 +75,7 @@ void GraphApp::Update()
     if (currentState == NORMAL || currentState == DRAGGING || showInputBox || currentState == KRUSKAL || currentState == INSERT || currentState == DELETE)
     {
         using namespace std; // Added for this block
-        if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 120), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 120), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Redo
         {
             if (!redoStack.empty())
             {
@@ -86,7 +86,7 @@ void GraphApp::Update()
                 redoStack.pop_back();
             }
         }
-        else if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 80), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 80), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Undo
         {
             if (!undoStack.empty())
             {
@@ -97,20 +97,31 @@ void GraphApp::Update()
                 undoStack.pop_back();
             }
         }
-        else if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 160), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, {200, static_cast<float>(screenHeight - 80), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Delete All
+        {
+            if (!undoStack.empty())
+            {
+                redoStack.push_back({vertices, edges});
+                GraphState prevState = undoStack.back();
+                vertices = prevState.vertices;
+                edges = prevState.edges;
+                undoStack.pop_back();
+            }
+        }
+        else if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 160), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Input file
         {
             ResetGraphState();
             ProcessFileInput();
             currentState = NORMAL;
         }
-        else if (CheckCollisionPointRec(mousePos, {200, static_cast<float>(screenHeight - 80), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, {200, static_cast<float>(screenHeight - 80), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Delete All
         {
             undoStack.push_back({vertices, edges});
             redoStack.clear();
             vertices.clear();
             edges.clear();
         }
-        else if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 40), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, {20, static_cast<float>(screenHeight - 40), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Random
         {
             ResetGraphState();
             currentState = RANDOM;
@@ -119,7 +130,7 @@ void GraphApp::Update()
             ProcessInput();
             currentState = NORMAL;
         }
-        else if (CheckCollisionPointRec(mousePos, {500, static_cast<float>(screenHeight - 40), 220, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, {500, static_cast<float>(screenHeight - 40), 220, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Kruskal's Algorithm
         {
             ResetGraphState();
             currentState = KRUSKAL;
@@ -129,7 +140,7 @@ void GraphApp::Update()
             totalWeight = 0;
             RunKruskalStepByStep();
         }
-        else if (CheckCollisionPointRec(mousePos, {350, static_cast<float>(screenHeight - 40), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, {350, static_cast<float>(screenHeight - 40), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Insert
         {
             if (currentState == INSERT && showInputBox)
             {
@@ -145,7 +156,7 @@ void GraphApp::Update()
                 inputText[0] = '\0';
             }
         }
-        else if (CheckCollisionPointRec(mousePos, {200, static_cast<float>(screenHeight - 40), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))
+        else if (CheckCollisionPointRec(mousePos, {200, static_cast<float>(screenHeight - 40), 140, 30}) && IsMouseButtonPressed(MOUSE_LEFT_BUTTON))// check if the mouse is over the button called Delete
         {
             if (currentState == DELETE && showInputBox)
             {
