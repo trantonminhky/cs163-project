@@ -8,21 +8,21 @@
 
 GraphApp::GraphApp()
 {
-    screenWidth = 1200;
-    screenHeight = 600;
+    screenWidth = 1200;// default width
+    screenHeight = 600;// default height
     InitWindow(screenWidth, screenHeight, "Graph Visualization");
     SetTargetFPS(60);
     srand(static_cast<unsigned>(time(nullptr)));
     inputText[0] = '\0';
-    showInputBox = false;
+    showInputBox = false;// default to false, it means the input box is not shown
     currentState = NORMAL;
-    draggedVertex = -1;
-    searchResult = "";
-    showSearchMessage = false;
-    kruskalTimer = 0.0f;
-    kruskalStep = -1;
-    showTable = false;
-    totalWeight = 0;
+    draggedVertex = -1;// default to -1, it means no vertex is being dragged
+    searchResult = "";// default to empty string, it means no search result
+    showSearchMessage = false;// default to false, it means no search message is shown
+    kruskalTimer = 0.0f;// default to 0.0f, it means no time has passed
+    kruskalStep = -1;// default to -1, it means no step in Kruskal's algorithm
+    showTable = false;// default to false, it is the table that shows the total weight of the minimum spanning tree
+    totalWeight = 0;// default to 0, it means no weight has been calculated
 }
 
 void GraphApp::Run()
