@@ -408,7 +408,7 @@ void GraphApp::Draw(bool& shouldReturn)
     Rectangle returnButton = { screenWidth - 150, 20, 120, 40 };
     bool returnHover = CheckCollisionPointRec(GetMousePosition(), returnButton);
     bool returnClicked = isButtonClicked(returnButton);
-    drawButton(returnButton, "Return", TEAL, returnHover, returnClicked);
+    drawButton(returnButton, "Return", GRAY, returnHover, returnClicked);
     if (returnClicked || IsKeyPressed(KEY_BACKSPACE)) {
         shouldReturn = true;
     }

@@ -451,7 +451,7 @@ void runHashTable() {
         ClearBackground(backgroundColor);
         DrawText("Hash Table Visualise", screenWidth / 2 - MeasureText("Hash Table Visualise", 100) / 2, screenHeight / 2 - 50, 100, Fade(GRAY, 0.2f));
         ui.draw();
-        drawButton(returnButton, "Return", YELLOW, returnHover, returnClicked);
+        drawButton(returnButton, "Return", GRAY, returnHover, returnClicked);
         EndDrawing();
     }
 }

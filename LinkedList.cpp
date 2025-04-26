@@ -531,7 +531,7 @@ void runLinkedList() {
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
         drawButton(loadFileButton, "File", loadFileColor, loadFileHover, loadFileClicked);
         drawButton(list.instantBtn, list.instantMode ? "Instant" : "Step", instantColor, instantHover, instantClicked);
-        drawButton(returnButton, "Return", YELLOW, returnHover, returnClicked);
+        drawButton(returnButton, "Return", GRAY, returnHover, returnClicked);
 
         DrawRectangleRec(inputBox, LIGHTGRAY);
         DrawRectangleLinesEx(inputBox, 2, BLACK);
