@@ -26,7 +26,7 @@ private:
     std::stack<std::pair<Node*, std::pair<bool, int>>> history; // <tree state, <wasInsert, value>>
     std::stack<std::pair<Node*, std::pair<bool, int>>> redoStack;
 
-    Node* insert(Node* node, int key, std::vector<Node*>& path);
+    Node* insert(Node* node, int key, std::vector<Node*>& path, std::string& searchResult, std::vector<int>& codePath);
     Node* deleteNode(Node* node, int key);
     Node* rightRotate(Node* y);
     Node* leftRotate(Node* x);
@@ -42,9 +42,9 @@ private:
 public:
     AVLTree();
     ~AVLTree();
-    void insert(int key);
+    void insert(int key, std::string& searchResult);
     void deleteNode(int key);
-    void search(int key, std::vector<Node*>& searchPath);
+    void search(int key, std::vector<Node*>& searchPath, std::vector<int>& codePath);
     void clear();
     Node* undo(std::vector<Node*>& affectedPath);
     Node* redo(std::vector<Node*>& affectedPath);
@@ -55,6 +55,13 @@ public:
     void LoadFromFile(std::string& searchResult);
     bool instantMode; // For instant execution toggle
     Rectangle instantBtn; // Instant mode button
+
+    // Code table members
+    void DrawCodeBox(int screenWidth, int screenHeight, int currentCodeIndex);
+    std::vector<std::string> insertCode; // Pseudocode for insert
+    std::vector<std::string> searchCode; // Pseudocode for search
+    std::vector<int> currentCodePath; // Indices of code lines to highlight
+    std::string currentOperation; // "insert", "search", or "" (none)
 };
 
 #endif
