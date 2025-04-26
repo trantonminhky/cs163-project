@@ -1,0 +1,449 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage[utf8]{inputenc}
+\usepackage[main=english,vietnamese]{babel}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{amsthm}
+\usepackage{tcolorbox}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{mathrsfs}
+\usepackage{centernot}
+\usepackage{cases}
+\usepackage{physics}
+\usepackage[shortlabels]{enumitem}
+\usepackage{tikz}
+\usepackage{lipsum}
+\usepackage{sidecap}
+\usepackage{verbatim}
+\usepackage{listings}
+
+\usetikzlibrary{calc}
+\usetikzlibrary{decorations.pathmorphing}
+
+\definecolor{borderblue}{HTML}{33c2ff}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+\newcommand{\paren}[1]{\left(#1\right)}
+\newcommand{\curly}[1]{\left\{#1\right\}}
+
+\allowdisplaybreaks
+
+\makeatletter
+\long\def\paragraph{%
+  \@startsection{paragraph}{4}%
+  {\z@}{2ex \@plus 1ex \@minus .2ex}{-1em}%
+  {\normalfont\normalsize\bfseries}%
+}
+\makeatother
+
+\makeatletter
+\def\@xequals@fill{\arrowfill@\Relbar\Relbar\Relbar}
+\newcommand*\xequals[2][]{\DOTSB\ext@arrow0055\@xequals@fill{#1}{#2}}
+\makeatother
+
+\makeatletter
+\renewcommand*\env@matrix[1][*\c@MaxMatrixCols c]{%
+  \hskip -\arraycolsep
+  \let\@ifnextchar\new@ifnextchar
+  \array{#1}}
+\makeatother
+
+\NewTColorBox{algorithm}{m}{
+  standard jigsaw,
+  sharp corners,
+  boxrule=0.4pt,
+  coltitle=black,
+  colframe=black,
+  opacityback=0,
+  opacitybacktitle=0,
+  fonttitle=\normalfont\bfseries\upshape,
+  fontupper=\normalfont,
+  title={Algorithm #1},
+  after title={.},
+  attach title to upper={\ },
+}
+
+\NewTColorBox{question}{m}{
+  standard jigsaw,
+  sharp corners,
+  boxrule=0.4pt,
+  coltitle=black,
+  colframe=black,
+  opacityback=0,
+  opacitybacktitle=0,
+  fonttitle=\normalfont\bfseries\upshape,
+  fontupper=\normalfont,
+  title={Question #1},
+  attach title to upper={\ },
+}
+
+\title{CS163 Project - Data Structure Visualization}
+\author{\textbf{Group 6: ARR-CHEESE}\\\foreignlanguage{vietnamese}{Trần Tôn Minh Kỳ, Phan Anh Khoa, Lê Lương Quốc Trung,}\\\foreignlanguage{vietnamese}{Phạm Võ Khang Duy}}
+\date{March 2025}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    The "DSA Visualizer" is an interactive C++ application designed to visually demonstrate four fundamental data structures and algorithms: AVL Tree, Linked List, Hash Table, and Graph. Built using the raylib graphics library and TinyFileDialogs for file input, it aims to enhance understanding of DSA operations through animations and a user-friendly interface. Key features include insertion, deletion, search, undo/redo, random generation, file loading, specialized algorithms (e.g., Kruskal's for graphs), and a toggleable Instant/Step-by-Step mode for controlling animation speed. The project addresses the challenge of abstract DSA comprehension by providing a tangible, visual learning tool for students and enthusiasts.
+\end{abstract}
+
+\tableofcontents
+
+\newpage
+\section{Group Information}
+\begin{description}
+	\item[\foreignlanguage{vietnamese}{Phan Anh Khoa (12 commits)}] Developed the AVL tree module. Integrated every member's structures into a unified application. Developed the menu screen and overall project structure. Distinctly delineated the report's details and documentation.
+	\item[\foreignlanguage{vietnamese}{Trần Tôn Minh Kỳ (29 commits)}] Developed the Linked List module. Assisted in Git setup and overall collaboration. Compiled the report in \LaTeX.
+	\item[\foreignlanguage{vietnamese}{Lê Lương Quốc Trung (8 commits)}] Developed the Hash Table module. Composed a section in Hash Table in the report, including design rationale and implementation overview.
+	\item[\foreignlanguage{vietnamese}{Phạm Võ Khang Duy (7 commits)}] Developed the Graph module. Implemented Prim's and Kruskal's algorithm, as well as a comprehensive report on the Minimum Spanning Tree problem.  
+\end{description}
+
+\section{Introduction}
+Every computer science undergraduate always has a course on Data Structures \& Algorithms, which is not without reason. They are the backbones of computer science. Fundamentally they are simply data management methods to ensure efficiency and cohesion. There is no one-size-fits-all data structure however; different structure must be used in a flexible manner for different circumstances, and thus the diversity of the data structures in a programmer's arsenal. This diversity is a double-edged sword, it may also pose a challenge to students trying to grasp the nuances behind each data structure.
+
+Our DSA visualizer attempts to solve this problem by bridging the gap between the abstraction of the theories and the practicality of the codes. The DSA visualizer is thus an educational tool allowing students to see the gears behind every structure, the operations behind every algorithm. We aim to make our application as intuitive as possible, yet so simple and exciting that a layman will be eager to learn. Our goals are as follows:
+\begin{itemize}
+	\item Develop an interactive visualization for Linked List, Hash Table, AVL Tree, and Graph.
+	\item Implement core operations (insert, delete, search) with animations.
+	\item Provide advance features (undo, redo, file input, line-by-line code demonstration).
+	\item Ensure a user-friendly interface.
+	\item Step-by-step or instant demonstration of the operations.
+\end{itemize}
+
+\section{Data Storage}
+This project uses dynamic memory allocation to store nodes and edges. Typically, a linked list node will be implemented as follows:
+\begin{lstlisting}[language=c++]
+	struct Node {
+		int val; // data stored in node
+		Node* next; // pointer to the next node, nullptr if none
+	}
+\end{lstlisting}
+For hash tables, we will use linked list to store collisions. To enable the undo/redo features, we shall use \lstinline[language=c++]|std::stack| to store deep copies of states. This is optimal in terms of efficiency and simplicity; the usage of stacks obeys the LIFO nature of the action of undoing/redoing.
+
+We chose these methods of data storage with rationales that this should boost efficiency and simplicity by storing the data in memory as well as avoiding the complexity of a persistent file-based storage. This also allows real-time visualization and aligns with the current goals and operations.
+
+\section{Project Architecture}
+We outline the overall project's directory as follows:
+\begin{lstlisting}
+	DSA_Visualizer/
+	|-- main.cpp 	<!-- Entry point and menu -->
+	|-- include/ 	<!-- Header files -->
+	|		|-- AVL.h 					<!-- AVL Tree definitions -->
+	|		|-- HashTable.h			<!-- Hash Table definitions -->
+	|		|-- Graph.h					<!-- Graph definitions -->
+	|		|-- LinkedList.h 		<!-- Linked List definitions -->
+	|		|-- Common.h 				<!-- Shared utilities -->
+	|--	src/			<!-- Source files -->
+	|		|-- AVL.cpp					<!-- AVL Tree implementation -->
+	|		|-- HashTable.cpp		<!-- Hash Table implementation -->
+	|		|-- Graph.cpp				<!-- Graph implementation -->
+	|		|-- LinkedList.cpp	<!-- Linked List implementation -->
+	|		|-- Menu.cpp				<!-- Menu implementation -->
+	|		|-- Common.cpp			<!-- Shared utilities implementation -->
+	|-- external/	<!-- External libraries -->
+			|-- raylib.h
+			|-- tinyfiledialogs.h
+\end{lstlisting}
+In order to successfully compile and build these core files, auxiliary build files are also implemented on each member's end.
+
+\section{Implementation Details}
+\subsection{Structs and Classes Implementations}
+\subsubsection{Linked List}
+The involved files are \lstinline|include/LinkedList.h| and \lstinline|/src/LinkedList.cpp|. In order to describe a node, we propose the structure \lstinline|NodeL| as follows:
+\begin{lstlisting}[language=c++]
+	struct NodeL {
+		int value;
+		NodeL* next;
+		float x, y, targetX, targetY;
+		NodeL(int val);
+	};
+\end{lstlisting}
+The above implementation includes the node's data and animation coordinates. Altogether, this builds a class \lstinline|LinkedList| as follows:
+\begin{lstlisting}[language=c++]
+	class LinkedList {
+	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
+
+		NodeL* insert(NodeL* node, int value, std::vector<NodeL*>& path);
+		// Recursively adds a node at the end, tracking the path for animation (O(n)).
+
+		NodeL* deleteNode(NodeL* node, int value);
+		// Traverses to find and remove the node, adjusting next pointers (O(n)).
+
+		void search(int value, std::vector<NodeL*>& searchPath);
+		// Traverses linearly, adding nodes to searchPath until value is found (O(n)).
+
+		NodeL* undo(std::vector<NodeL*>& affectedPath);
+		// Pops a state from history or redoStack, deep-copies the current state, and restores the previous/next state.
+
+		void updateAnimation(float deltaTime);
+		// Interpolates node positions horizontally (targetX).
+
+		void draw(const std::vector<NodeL*>& highlightPath);
+		// Draws nodes and links linearly, pulsing highlighted nodes.
+	}
+\end{lstlisting}
+
+\subsubsection{Hash Table}
+The involved files are \lstinline|include/HashTable.h| and \lstinline|/src/HashTable.cpp|. In order to describe a node, we propose the structure \lstinline|NodeH| as follows:
+\begin{lstlisting}[language=c++]
+	struct NodeH {
+		int value;
+		NodeH* next;
+	};
+\end{lstlisting}
+This implementation handles the data of the table itself. In order to efficiently handle the table's interface and data, we propose the implementation of two classes \lstinline|HashTable| and \lstinline|UI|. Their implementations are as follows:
+\begin{lstlisting}[language=c++]
+	class HashTable {
+	public:
+		void insert(int value);
+		// Hashes value (value % 19), adds to the chain if unique (O(1) on average, worst case O(n)).
+
+		bool remove(int value);
+		// Searches the chain at the hashed index and removes the node (O(n)).
+
+		bool find(int value);
+		// Searches the chain for value (O(n)).
+	}
+
+	class UI {
+	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
+
+		void update();
+		// Manages animation states (INDEX, EXISTING_NODES, NEW_NODE) with a timer, processes user input, and queues file-loaded values.
+
+		void draw();
+		// Renders table slots, nodes, buttons, and input box (linear rendering O(n)).
+	}
+\end{lstlisting}
+
+\subsubsection{Graph}
+The involved files are \lstinline|include/Graph.h| and \lstinline|/src/Graph.cpp|. In order to describe an edge and a vertex, we propose the structure \lstinline|Vertex| and \lstinline|Edge| as follows:
+\begin{lstlisting}
+	struct Vertex {
+		Vector2 position;
+		int id;
+		bool selected;
+		float scale;
+		float alpha;
+		Vector2 targetPos;
+	};
+
+	struct Edge {
+		int from;
+		int to;
+		int weight;
+		bool highlighted;
+		bool blurred;
+	};
+\end{lstlisting}
+As such, the implementation of the class \lstinline|GraphApp| is as follows:
+\begin{lstlisting}[language=c++]
+	class GraphApp {
+	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
+
+		void Update();
+		// Applies a force-directed layout (repulsive forces between vertices, UI avoidance) to position nodes dynamically (O(n^2)).
+
+		void Draw(bool& shouldReturn);
+		// Renders vertices, edges, buttons, and input box with highlights (O(K + E)).
+
+		void RunKruskalStepByStep();
+		// Sorts edges by weight, applies Union-Find to build MST, highlights steps over time (O(ElogE)).
+
+		void ProcessInsert();
+		// Parses input text to add vertices and edges, ensuring uniqueness (O(K + E)).
+
+		void ProcessDelete();
+		// Parses input text to remove vertices and edges, ensuring uniqueness (O(K + E)).
+	}
+\end{lstlisting}
+
+\subsubsection{AVL Tree}
+The involved files are \lstinline|include/AVL.h| and \lstinline|/src/AVL.cpp|. In order to describe a node, we implement the following struct:
+\begin{lstlisting}[language=c++]
+	struct Node {
+		int key;
+		int height;
+		Node* left;
+		Node* right;
+		float x, y;
+		float targetX, targetY;
+		bool isDying;
+		Node(int value);
+	};
+\end{lstlisting}
+As usual, the class implementation is as follows:
+\begin{lstlisting}[language=c++]
+	class AVLTree {
+	public:
+		bool instantMode;
+		// Instant execution toggle. All animations are turned off and nodes are immediately present at their positions.
+
+		void insert(int key);
+		// Recursively inserts a node with key, updating the path for animation. Balances the tree using AVL rotations if the balance factor (getHeight(left) - getHeight(right)) exceeds 1 or -1.
+
+		void deleteNode(int key);
+		// Recursively finds and removes the node, replacing it with the minimum of the right subtree if it has two children, then rebalances.
+
+		void search(int key, std::vector<Node*>& searchPath);
+		// Traverses the tree, adding nodes to searchPath until key is found or traversal ends.
+
+		Node* undo(std::vector<Node*>& affectedPath);
+		// Pops a state from history, deep-copies the current state, and restores the previous state.
+
+		Node* redo(std::vector<Node*>& affectedPath);
+		// Pops a state from redoStack, deep-copies the current state, and restores the next state.
+
+		void updateAnimation(float deltaTime);
+		// Uses linear interpolation (x += dx * deltaTime * 2.0f) to move nodes from current (x, y) to target positions (targetX, targetY).
+
+		void draw(const std::vector<Node*>& highlightPath);
+		// Recursively renders nodes (circles) and edges (lines) with raylib, highlighting nodes in highlightPath.
+	}
+\end{lstlisting}
+
+\subsection{Usage}
+\subsubsection{Linked List}
+The usage flow of the Linked List data structure is as follows:
+\begin{enumerate}
+	\item User enters "15" and clicks "Search".
+	\item \lstinline|runLinkedList()| calls \lstinline|list.search(15, searchPath)|.
+	\item \lstinline|LinkedList::search| builds \lstinline|searchPath| (e.g. \lstinline|[5,10,15]|).
+	\item \lstinline|updateAnimation| adjusts position (horizontal at $y = 500$) and \lstinline|draw| pulses each node every 0.5 seconds, which is \lstinline|searchTimer| (this is ignored if instant mode is enabled).
+	\item \lstinline|draw| renders the list with highlights.
+\end{enumerate}
+This works in tandem with the background processes, which we called collaboration:
+\begin{enumerate}
+	\item \lstinline|NodeL| stores values and links.
+	\item \lstinline|search| performs linear traversal.
+	\item raylib's timing (\lstinline|GetFrameTime|) and drawing (\lstinline|DrawCircle|) creates the animation effect unless instant mode is enabled.
+\end{enumerate}
+
+\subsubsection{Hash Table}
+The usage flow of the Hash Table data structure is as follows:
+\begin{enumerate}
+	\item User clicks "Load", selects a file via \lstinline|tinyfd_openFileDialog|.
+	\item \lstinline|UI::update| reads integers into \lstinline|insertQueue| (or inserts instantly with \lstinline|instantMode|).
+	\item \lstinline|update| processes \lstinline|insertQueue|, calling \lstinline|HashTable::insert| per value.
+	\item Animation states (\lstinline|INDEX|, \lstinline|EXISTING_NODES|, \lstinline|NEW_NODE|) highlight slots and nodes (immediately inserts all values without animation if instant mode is turned on).
+	\item \lstinline|draw| renders the updated table.
+\end{enumerate}
+This works in tandem with collaboration:
+\begin{enumerate}
+	\item \lstinline|NodeH| and \lstinline|HashTable| manage data with chaining.
+	\item \lstinline|UI| orchestrates animation (unless it is instant mode) and input handling.
+	\item \lstinline|TinyFileDialogs| and raylib enable file input and visualization.
+\end{enumerate}
+
+\subsubsection{Graph}
+The usage flow of the Graph data structure is as follows:
+\begin{enumerate}
+	\item User clicks "Kruskal's Algorithm".
+	\item \lstinline|runGraph()| calls \lstinline|app.Update()| and \lstinline|app.Draw(shouldReturn)|.
+	\item \lstinline|GraphApp::RunKruskalStepByStep| sorts edges by weights using \lstinline|std::sort|, initializes parent for \lstinline|Union-Find|, iterates edges every one second (\lstinline|kruskalTimer|) while calling \lstinline|Union-Find| to build MST and highlights accepted edges (\lstinline|highlighted = true|). If instant mode is enabled, the MST is completed instantly instead.
+	\item \lstinline|Draw| renders vertices, edges and highlights, showing MST progress (bar the intermediate states if instant mode is enabled).
+\end{enumerate}
+This works in tandem with collaboration:
+\begin{enumerate}
+	\item \lstinline|Vertex| and \lstinline|Edge| store graph data.
+	\item \lstinline|RunKruskalStepByStep| implements Kruskal's with \lstinline|Union-Find|.
+	\item raylib's \lstinline|DrawLineV| and \lstinline|DrawCircleV| visualize the process (instantly in instant mode).
+\end{enumerate}
+
+\subsubsection{AVL Tree}
+The usage flow of the AVL Tree data structure is as follows:
+\begin{enumerate}
+	\item User enters "42" in the input box and clicks "Insert"
+	\item \lstinline|runAVL()| detects the click (\lstinline|isButtonClicked(insertButton)|) and calls \lstinline|tree.insert(42)|.
+	\item \lstinline|AVLTree::insert| traverses the tree, inserts the node, and balances if needed (e.g. \lstinline|rightRotate|).
+	\item \lstinline|calculatePositions| assigns \lstinline|targetX| and \lstinline|targetY| (e.g. $x = 700 - \text{\lstinline|offset|},y = 50 + \text{\lstinline|depth|}\times100$).
+	\item \lstinline|updateAnimation| moves the node to its target over frames (\lstinline|x| and \lstinline|y| are set to )
+	\item \lstinline|draw| renders the tree, showing the new node.
+\end{enumerate}
+This works in tandem with collaboration:
+\begin{enumerate}
+	\item \lstinline|Node| provides the structure for tree storage.
+	\item \lstinline|insert| uses recursive BST logic and AVL balancing.
+	\item raylib's \lstinline|GetFrameTime| and drawing functions animate and display the result.
+\end{enumerate}
+
+\subsection{Enhancements}
+We shall now delineate the enhancements we have made on our visualizer. We made each function's purpose, logic and algorithm basis more explicit, such as AVL balancing and Kruskal's MST. There is a key flow for each DSA showing how user actions trigger method calls, data updates, animations and rendering. This clarifies collaborations of each DSA between their functionality and raylib's personality. This is also improved with respect to algorithms, e.g. linear interpolation and \lstinline|Union-Find|
+
+\section{Technical Problems and Solutions}
+\subsection{Merging individual DSA projects into a unified application}
+Initially, each DSA was handled rather disparately; that is, they were self-contained with each of their own \lstinline|main()| function, window initialization and event loops. Creating a menu system for the whole project then revealed inconsistencies across window management and layouts, as well as coordinate mismatches. In the worst case scenario, this causes flickering and crashes. As such, we standardized the screensize to $1400\times1000$ across all DSA's, adjusted buttons' locations and remove independent window management functions in each DSA's \lstinline|main.cpp|. This resulted in a seamless experience when switching across each DSA visualizer.
+
+\subsection{Multiple windows opening for visualizations}
+Post-merge, entering Linked List's, Hash Table's and Graph's visualizers opens a new window due to lingering \lstinline|InitWindow()| calls, increasing resource usage and fragmented user experience. A fix on DSA merging corrected this issue.
+
+\subsection{Graph visualization shaking}
+An issue was found in the Graph visualizer, i.e. dual \lstinline|BeginDrawing()|/\lstinline|EndDrawing()| cycles and another in \lstinline|runGraph()| for the "Return" button, making the visualizer shake excessively by disrupting the force-directed layout's synchronization. Moving the "Return" button rendering inside \lstinline|BeginDrawing()|/\lstinline|EndDrawing()| block and aligning it with the force directed updates (\lstinline|Update()| with $k = 15000.0f$) helped with visual coherence.
+
+\subsection{Animation lag in large datasets}
+Loading large files with 100 values or above into AVL Tree and Linked List DSA caused animation lag due to the recursive logic in \lstinline|updateAnimation|. We precomputed \lstinline|std::vector<Node*>| in \lstinline|updateAnimation| to avoid recursive traversals per frame and reduced interpolation factor from $\text{\lstinline|deltaTime|}\times2.0f$ to $\text{\lstinline|deltaTime|}\times1.5$ for AVL Tree and Linked List respectively.
+
+\section{Feature Demonstration}
+\url{https://www.youtube.com/watch?v=uo_J6KIRMF8}
+
+\section{Conclusion}
+Our DSA visualizer represents our achievements in creating an educational tool in computer science. We try our best to develop a robust application that highlights the utmost important aspects of each DSA.
+\begin{description}
+	\item[Comprehensive visualization.] Each DSA supports core operations, i.e. search, insert and delete. With real-time animation, line-by-line code demonstration and comprehensive structural changes, our visualizer successfully showcases advanced algorithmic behaviors.
+	\item[Unified interface.] The integration of standalone DSA into one unified menu provides a symmetrical menu and seamless user experience.
+	\item[Interactive features.] Aside from core operations, the visualizer also supports undo/redo, file input and random data generation, which is integral to an interactive DSA visualizer.   
+\end{description}
+While we admire our current progress, much is left to be improved. We set our eyes on these following goals for a much more robust visualizer.
+\begin{description}
+	\item[Additional DSA.] The additions of Heaps, Tries or B-Trees could expand the visualizer's scopes and toolsets.
+	\item[Persistent storage.] As of now, data is stored in memory and will be reset on exit. A save/load feature using JSON or binary file would tackle this issue and allow the user to revisit DSA states.
+	\item[Performance optimization.] For extremely large datasets up to thousands of nodes, further optimizations are required to reduce lag and refine the program's control flow. 
+\end{description}
+In recapitulation, this project not only demonstrates our technical skills but also lays a foundation for interactive visualizers in the field. We look forward to our next project in order to elevate the visualizer to make it more useful and comprehensive.
+
+\section{References}
+\begin{description}
+	\item[\href{https://www.raylib.com/}{Raylib official website and documentation.}] The primary resource for understanding Raylib's graphics and input handling functions, such as \lstinline|DrawText|, \lstinline|DrawCircle|, \lstinline|DrawLineV|, \lstinline|GetMousePosition|, \lstinline|IsMouseButtonPressed|, \lstinline|GetFrameTime|, \lstinline|BeginDrawing| and \lstinline|EndDrawing|.
+	\item[\href{https://sourceforge.net/projects/tinyfiledialogs/}{TinyFileDialogs project page.}] Official documentation for the TinyFileDialogs library, specifically the \lstinline|tinyfd_openFileDialog| function, which enabled file selection for loading data into AVL Tree, Linked List, Hash Table, and Graph visualizations.
+	\item[\href{https://en.cppreference.com/w/}{C++ Reference.}] A comprehensive reference for the C++ Standard Template Library (STL).
+	\item[\href{https://stackoverflow.com/}{Stack Overflow.}] A community-driven Q\&A platform providing solutions to common programming challenges, such as pointer management, animation techniques, and Raylib usage.
+	\item[Introduction to Algorithms.] A seminal textbook on algorithms, providing detailed explanations of AVL Tree balancing, Linked List operations, Hash Table chaining, and Graph algorithms like Kruskal's Minimum Spanning Tree.
+	\item[\href{https://www.geeksforgeeks.org/}{GeeksforGeeks}] An online resource offering tutorials and code examples for data structures and algorithms, including AVL Trees, Linked Lists, Hash Tables, and Graphs.
+	\item[\href{https://gcc.gnu.org/onlinedocs/}{GNU Compiler Collection (GCC) Documentation}] Documentation for the GCC compiler, used to compile the project with Raylib and TinyFileDialogs libraries.
+\end{description}
+
+\end{document}
