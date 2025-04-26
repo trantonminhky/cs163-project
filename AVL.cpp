@@ -869,7 +869,7 @@ void runAVL() {
         drawButton(redoButton, "Redo", TEAL, redoHover, redoClicked);
         drawButton(FileButton, "File", Mediumblue, FileHover, FileClicked);
         drawButton(tree.instantBtn, tree.instantMode ? "Instant" : "Step", instantColor, instantHover, instantClicked);
-        drawButton(returnButton, "Return", YELLOW, returnHover, returnClicked);
+        drawButton(returnButton, "Return", GRAY, returnHover, returnClicked);
 
         // Add visual feedback for invalid input
         bool isValidInput = true;
