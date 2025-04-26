@@ -5,3 +5,10 @@ AVL.sln
 AVL.vcxproj
 AVL.vcxproj.filters
 AVL.vcxproj.user
+*.exe
+.vscode
+resources
+main.code-workspace
+Makefile
+Makefile.Android
+main.exe
